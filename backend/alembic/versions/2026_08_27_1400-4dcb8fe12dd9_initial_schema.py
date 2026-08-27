@@ -26,6 +26,8 @@ def upgrade() -> None:
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('is_default', sa.Boolean(), nullable=False, server_default=sa.text('false')),
         sa.Column('user_id', sa.Integer(), nullable=False, server_default=sa.text('1')),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_categories_id'), 'categories', ['id'], unique=False)
@@ -43,6 +45,8 @@ def upgrade() -> None:
         sa.Column('payment_mode', sa.String(length=50), nullable=True),
         sa.Column('category_id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False, server_default=sa.text('1')),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='RESTRICT'),
         sa.PrimaryKeyConstraint('id')
     )
@@ -61,6 +65,8 @@ def upgrade() -> None:
         sa.Column('amount_limit', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('category_id', sa.Integer(), nullable=True),
         sa.Column('user_id', sa.Integer(), nullable=False, server_default=sa.text('1')),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='SET NULL'),
         sa.PrimaryKeyConstraint('id')
     )
