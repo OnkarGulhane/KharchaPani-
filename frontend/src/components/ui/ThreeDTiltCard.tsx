@@ -20,6 +20,16 @@ export default function ThreeDTiltCard({
 }: ThreeDTiltCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsTouchDevice(
+        window.matchMedia("(pointer: coarse)").matches ||
+        !window.matchMedia("(hover: hover)").matches
+      );
+    }
+  }, []);
 
   // Mouse position in relative coordinates (-0.5 to 0.5)
   const mouseX = useMotionValue(0);
@@ -39,7 +49,7 @@ export default function ThreeDTiltCard({
   const glareY = useTransform(smoothY, [-0.5, 0.5], ["0%", "100%"]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
+    if (isTouchDevice || !cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -48,10 +58,12 @@ export default function ThreeDTiltCard({
   };
 
   const handleMouseEnter = () => {
+    if (isTouchDevice) return;
     setIsHovered(true);
   };
 
   const handleMouseLeave = () => {
+    if (isTouchDevice) return;
     setIsHovered(false);
     mouseX.set(0);
     mouseY.set(0);

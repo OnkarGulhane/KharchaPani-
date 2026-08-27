@@ -172,40 +172,42 @@ export default function ExpenseList({
                 animate="visible"
                 exit="exit"
                 layout
-                className="p-4 flex items-center justify-between"
+                className="p-3.5 sm:p-4 flex items-center justify-between gap-3 hover:bg-gray-800/30 transition-colors"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-white">{exp.title}</span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm text-white truncate max-w-[170px] xs:max-w-[220px] sm:max-w-none">{exp.title}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0 truncate max-w-[110px]">
                       {exp.category?.name || (exp as any).category_name || "Uncategorized"}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                  <p className="text-xs text-gray-400 flex items-center gap-1.5 flex-wrap">
                     <span>{exp.date}</span>
                     <span>•</span>
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 flex-shrink-0">
                       {getPaymentIcon(exp.payment_mode)}
                       {exp.payment_mode || "UPI"}
                     </span>
                   </p>
-                  {exp.notes && <p className="text-xs text-gray-500 italic">{exp.notes}</p>}
+                  {exp.notes && <p className="text-xs text-gray-500 italic truncate max-w-[260px]">{exp.notes}</p>}
                 </div>
 
-                <div className="flex flex-col items-end gap-2">
-                  <span className="font-extrabold text-emerald-400 font-mono text-sm">
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <span className="font-extrabold text-emerald-400 font-mono text-sm sm:text-base">
                     {formatAmount(exp.amount)}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => onEdit(exp)}
-                      className="p-1.5 text-gray-400 hover:text-white"
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                      title="Edit expense"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setExpenseToDelete(exp)}
-                      className="p-1.5 text-gray-400 hover:text-rose-400"
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      title="Delete expense"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -219,8 +221,8 @@ export default function ExpenseList({
 
       {/* Pagination Bar */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2 px-1">
-          <span className="text-xs text-gray-400">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 px-1">
+          <span className="text-xs text-gray-400 text-center sm:text-left">
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total} expenses
           </span>
 
@@ -228,19 +230,19 @@ export default function ExpenseList({
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              className="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white disabled:opacity-40 transition-colors"
+              className="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white disabled:opacity-40 transition-colors active:scale-95"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <span className="text-xs font-bold text-gray-300 font-mono">
+            <span className="text-xs font-bold text-gray-300 font-mono px-2">
               Page {page} of {totalPages}
             </span>
 
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={!paginatedData?.has_next}
-              className="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white disabled:opacity-40 transition-colors"
+              className="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white disabled:opacity-40 transition-colors active:scale-95"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

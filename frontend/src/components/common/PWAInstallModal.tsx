@@ -70,17 +70,17 @@ export default function PWAInstallModal() {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.92, opacity: 0, y: 15 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-md glass-panel bg-[#111827]/95 border border-emerald-500/35 rounded-3xl p-5 sm:p-6 shadow-2xl z-10 overflow-hidden text-gray-100"
+          className="relative w-full max-w-md glass-panel bg-[#111827]/95 border border-emerald-500/35 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl z-10 max-h-[90dvh] overflow-y-auto overscroll-contain text-gray-100"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-gray-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                <Smartphone className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/25 flex-shrink-0">
+                <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-base text-white">Kharcha Pani ॲप इन्स्टॉल</h3>
-                <p className="text-xs text-emerald-400 font-medium">मोबाईल & डेस्कटॉप PWA</p>
+                <h3 className="font-bold text-sm sm:text-base text-white">Kharcha Pani ॲप इन्स्टॉल</h3>
+                <p className="text-[11px] sm:text-xs text-emerald-400 font-medium">मोबाईल & डेस्कटॉप PWA</p>
               </div>
             </div>
             <button
@@ -92,39 +92,39 @@ export default function PWAInstallModal() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-1 bg-gray-900/90 p-1 rounded-xl mt-4 border border-gray-800">
+          <div className="flex items-center gap-1 bg-gray-900/90 p-1 rounded-xl mt-3 sm:mt-4 border border-gray-800">
             <button
               onClick={() => setActiveTab("install")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${
                 activeTab === "install"
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                   : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Android / PC</span>
             </button>
             <button
               onClick={() => setActiveTab("qr")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${
                 activeTab === "qr"
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                   : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              <QrCode className="w-3.5 h-3.5" />
-              <span>फोनवर स्कॅन करा</span>
+              <QrCode className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>QR स्कॅन</span>
             </button>
             <button
               onClick={() => setActiveTab("ios")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-semibold transition-all ${
                 activeTab === "ios"
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                   : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              <Share className="w-3.5 h-3.5" />
-              <span>iPhone (Safari)</span>
+              <Share className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>iPhone</span>
             </button>
           </div>
 

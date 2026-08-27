@@ -79,31 +79,31 @@ export default function SummaryCards({ summary, loading }: Props) {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.08 }}
-              className={`glass-card p-5 rounded-2xl border border-gray-800/80 bg-gradient-to-br ${card.gradient} flex flex-col justify-between relative overflow-hidden group cursor-pointer h-full min-h-[140px]`}
+              className={`glass-card p-4 sm:p-5 rounded-2xl border border-gray-800/80 bg-gradient-to-br ${card.gradient} flex flex-col justify-between relative overflow-hidden group cursor-pointer h-full min-h-[130px] sm:min-h-[140px]`}
             >
               {/* Top Row */}
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-400 uppercase tracking-wider truncate">
                   {card.title}
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${card.badgeColor}`}>
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                  <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full border ${card.badgeColor}`}>
                     {card.badge}
                   </span>
-                  <div className={`p-2.5 rounded-xl border ${card.accent} group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
-                    <Icon className="w-4 h-4" />
+                  <div className={`p-2 sm:p-2.5 rounded-xl border ${card.accent} group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
               </div>
 
               {/* Bottom Row */}
-              <div className="mt-4">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight group-hover:text-emerald-300 transition-colors font-mono">
+              <div className="mt-3 sm:mt-4 min-w-0">
+                <h3 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-white tracking-tight group-hover:text-emerald-300 transition-colors font-mono truncate">
                   {card.value}
                 </h3>
-                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5 font-medium">
-                  <Sparkles className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400 transition-colors" />
-                  {card.subtitle}
+                <p className="text-[11px] sm:text-xs text-gray-400 mt-1 flex items-center gap-1.5 font-medium truncate">
+                  <Sparkles className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400 transition-colors flex-shrink-0" />
+                  <span className="truncate">{card.subtitle}</span>
                 </p>
               </div>
             </motion.div>

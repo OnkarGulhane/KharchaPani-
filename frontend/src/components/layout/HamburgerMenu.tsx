@@ -28,24 +28,24 @@ export default function HamburgerMenu() {
   return (
     <div className="md:hidden">
       {/* Top Mobile Bar */}
-      <header className="flex items-center justify-between px-3.5 py-2.5 glass-panel sticky top-0 z-40 border-b border-gray-800 backdrop-blur-xl">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-md shadow-emerald-500/20">
+      <header className="flex items-center justify-between px-3 sm:px-4 py-2 glass-panel sticky top-0 z-40 border-b border-gray-800 backdrop-blur-xl">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-md shadow-emerald-500/20 flex-shrink-0">
             <Wallet className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-sm text-white">Kharcha Pani</span>
+          <span className="font-bold text-sm text-white truncate">Kharcha Pani</span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
           {/* Quick Install Pill Badge in Top Bar */}
           {!isInstalled && (
             <button
               onClick={() => promptInstall()}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/25 active:scale-95 transition-all shadow-sm"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/25 active:scale-95 transition-all shadow-sm"
               title="Install App on Phone"
             >
               <Download className="w-3 h-3 text-emerald-400 animate-pulse" />
-              <span>Install</span>
+              <span className="hidden xs:inline sm:inline">Install</span>
             </button>
           )}
 
@@ -77,7 +77,7 @@ export default function HamburgerMenu() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="fixed top-0 left-0 bottom-0 w-72 bg-surface border-r border-gray-800 z-50 p-5 flex flex-col justify-between"
+              className="fixed top-0 left-0 bottom-0 w-72 max-w-[85vw] max-h-[100dvh] overflow-y-auto bg-surface border-r border-gray-800 z-50 p-5 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between pb-6 mb-6 border-b border-gray-800">

@@ -78,27 +78,27 @@ export default function RecentExpenses({ expenses, loading }: Props) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.25, delay: idx * 0.04 }}
                 whileHover={{ x: 4 }}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-900/60 border border-gray-800/80 hover:border-emerald-500/40 hover:bg-gray-800/50 transition-all duration-200 group cursor-pointer"
+                className="flex items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-gray-900/60 border border-gray-800/80 hover:border-emerald-500/40 hover:bg-gray-800/50 transition-all duration-200 group cursor-pointer gap-2"
               >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-transparent border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-xs font-extrabold uppercase shadow-sm group-hover:scale-105 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.2)] transition-all">
+                <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-transparent border border-emerald-500/30 flex items-center justify-center text-emerald-300 text-[11px] sm:text-xs font-extrabold uppercase shadow-sm group-hover:scale-105 group-hover:shadow-[0_0_12px_rgba(16,185,129,0.2)] transition-all flex-shrink-0">
                     {catName.slice(0, 2)}
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white tracking-wide group-hover:text-emerald-300 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs sm:text-sm font-bold text-white tracking-wide group-hover:text-emerald-300 transition-colors truncate">
                       {expense.title}
                     </h4>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                      <span className="font-semibold text-gray-300">{catName}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[10px] sm:text-xs text-gray-400 flex-wrap">
+                      <span className="font-semibold text-gray-300 truncate max-w-[100px] sm:max-w-none">{catName}</span>
                       <span>•</span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 flex-shrink-0">
                         <Calendar className="w-3 h-3 text-gray-500" />
                         {expense.date}
                       </span>
                       {expense.payment_mode && (
                         <>
                           <span>•</span>
-                          <span className="inline-flex items-center gap-1 text-[11px] uppercase font-bold text-gray-400">
+                          <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] uppercase font-bold text-gray-400 flex-shrink-0">
                             {getPaymentIcon(expense.payment_mode)}
                             {expense.payment_mode}
                           </span>
@@ -108,8 +108,8 @@ export default function RecentExpenses({ expenses, loading }: Props) {
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-base font-extrabold text-emerald-400 font-mono tracking-tight group-hover:text-emerald-300">
+                <div className="text-right flex-shrink-0 ml-1 sm:ml-2">
+                  <span className="text-xs sm:text-base font-extrabold text-emerald-400 font-mono tracking-tight group-hover:text-emerald-300">
                     -{formatAmount(expense.amount)}
                   </span>
                 </div>

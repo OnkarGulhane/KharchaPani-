@@ -91,11 +91,11 @@ export default function CategoryPieChart({ data, loading }: Props) {
       <div className="absolute -top-28 -left-28 w-56 h-56 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-3 sm:mb-4 z-10">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-extrabold text-white tracking-wide flex items-center gap-2">
-              <PieIcon className="w-5 h-5 text-blue-400" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm sm:text-base font-extrabold text-white tracking-wide flex items-center gap-2">
+              <PieIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 flex-shrink-0" />
               <span>Spend by Category</span>
             </h3>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30">
@@ -110,16 +110,16 @@ export default function CategoryPieChart({ data, loading }: Props) {
       </div>
 
       {/* Donut Chart with Centered Metric */}
-      <div className="min-h-[220px] h-56 w-full relative flex items-center justify-center z-10">
+      <div className="min-h-[200px] sm:min-h-[220px] h-52 sm:h-56 w-full relative flex items-center justify-center z-10">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={58}
-              outerRadius={82}
-              paddingAngle={4}
+              innerRadius={52}
+              outerRadius={76}
+              paddingAngle={3}
               dataKey="amount"
               nameKey="category_name"
               activeIndex={activeIndex !== null ? activeIndex : undefined}
@@ -161,12 +161,12 @@ export default function CategoryPieChart({ data, loading }: Props) {
 
         {/* Center Donut Label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[10px] uppercase tracking-wider font-extrabold text-gray-400">
+          <span className="text-[10px] uppercase tracking-wider font-extrabold text-gray-400 max-w-[90px] truncate text-center">
             {activeIndex !== null && data[activeIndex]
               ? data[activeIndex].category_name
               : "Total"}
           </span>
-          <span className="text-sm font-extrabold text-white mt-0.5 font-mono">
+          <span className="text-xs sm:text-sm font-extrabold text-white mt-0.5 font-mono">
             {formatAmount(
               activeIndex !== null && data[activeIndex]
                 ? data[activeIndex].amount
@@ -178,7 +178,7 @@ export default function CategoryPieChart({ data, loading }: Props) {
       </div>
 
       {/* Interactive Legend Grid */}
-      <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-gray-800/80 max-h-28 overflow-y-auto pr-1 z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 mt-2 pt-3 border-t border-gray-800/80 max-h-28 overflow-y-auto pr-1 z-10 scrollbar-none sm:scrollbar-thin">
         {data.map((item, idx) => {
           const isCurrentActive = activeIndex === idx;
           return (
@@ -187,7 +187,8 @@ export default function CategoryPieChart({ data, loading }: Props) {
               whileHover={{ scale: 1.02 }}
               onMouseEnter={() => setActiveIndex(idx)}
               onMouseLeave={() => setActiveIndex(null)}
-              className={`flex items-center gap-2 text-xs p-2 rounded-xl cursor-pointer transition-all duration-200 ${
+              onClick={() => setActiveIndex(activeIndex === idx ? null : idx)}
+              className={`flex items-center gap-2 text-xs p-1.5 sm:p-2 rounded-xl cursor-pointer transition-all duration-200 ${
                 isCurrentActive
                   ? "bg-gray-800/90 border border-emerald-500/40 shadow-sm"
                   : "hover:bg-gray-800/40 border border-transparent"
@@ -204,7 +205,7 @@ export default function CategoryPieChart({ data, loading }: Props) {
               >
                 {item.category_name}
               </span>
-              <span className="text-gray-400 font-mono text-[11px] ml-auto font-bold">
+              <span className="text-gray-400 font-mono text-[11px] ml-auto font-bold flex-shrink-0">
                 {item.percentage}%
               </span>
             </motion.div>

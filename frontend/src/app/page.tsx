@@ -110,26 +110,28 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <ReportPeriodSelector period={period} onChange={setPeriod} />
 
-          {/* Currency Switcher in Header */}
-          <CurrencySelector />
+          {/* Currency Switcher in Header (Desktop / Tablet) */}
+          <div className="hidden md:block">
+            <CurrencySelector />
+          </div>
 
           {!isInstalled && (
             <button
               onClick={() => setShowInstallModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
               title="Install Kharcha Pani App on your Mobile Phone"
             >
               <Smartphone className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <span>📱 Install on Phone</span>
+              <span>📱 Install</span>
             </button>
           )}
 
           <button
             onClick={() => setIsExpenseModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
           >
             <Plus className="w-4 h-4" />
             <span>Add Expense</span>
@@ -137,7 +139,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-300 hover:text-white rounded-xl active:scale-95 transition-all shadow-sm"
+            className="p-2 sm:p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-300 hover:text-white rounded-xl active:scale-95 transition-all shadow-sm flex-shrink-0"
             title="Manage Categories"
           >
             <Tags className="w-4 h-4" />
@@ -147,7 +149,7 @@ export default function DashboardPage() {
           <button
             onClick={handleRefreshAll}
             disabled={isRefreshing}
-            className={`p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm ${
+            className={`p-2 sm:p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm flex-shrink-0 ${
               isRefreshing
                 ? "text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-wait"
                 : "text-gray-400 hover:text-white"
@@ -176,16 +178,18 @@ export default function DashboardPage() {
       />
 
       {/* Main Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <CategoryPieChart data={charts?.pie_chart || []} loading={loadingCharts} />
         <SpendTrendChart data={charts?.trend_chart || []} loading={loadingCharts} />
       </div>
 
-      {/* Analytics Breakdown Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Analytics Breakdown Grid (Responsive 1-col on mobile, 2-col on tablet, 3-col on desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <MonthComparisonCard comparison={comparison} loading={loadingComparison} />
         <TopCategoriesList categories={topCategories || []} loading={loadingTopCat} />
-        <AverageSpendCard avgSpend={averageSpend} loading={loadingAvgSpend} />
+        <div className="sm:col-span-2 lg:col-span-1">
+          <AverageSpendCard avgSpend={averageSpend} loading={loadingAvgSpend} />
+        </div>
       </div>
 
       {/* Recent Transactions Snapshot */}

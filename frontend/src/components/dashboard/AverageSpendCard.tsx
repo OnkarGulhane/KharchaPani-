@@ -38,20 +38,20 @@ export default function AverageSpendCard({ avgSpend, loading }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-800/80">
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-bold text-gray-400">Daily Average</span>
-            <p className="text-xl font-extrabold text-white font-mono">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-3 pt-3 border-t border-gray-800/80">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 block truncate">Daily Average</span>
+            <p className="text-base sm:text-lg lg:text-xl font-extrabold text-white font-mono truncate">
               {formatAmount(perDay, { maximumFractionDigits: 1 })}
             </p>
-            <span className="text-[10px] text-emerald-400/80 font-medium">Per active cycle day</span>
+            <span className="text-[9px] sm:text-[10px] text-emerald-400/80 font-medium block truncate">Per active cycle day</span>
           </div>
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-bold text-gray-400">Weekly Pace</span>
-            <p className="text-xl font-extrabold text-white font-mono">
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 block truncate">Weekly Pace</span>
+            <p className="text-base sm:text-lg lg:text-xl font-extrabold text-white font-mono truncate">
               {formatAmount(perWeek, { maximumFractionDigits: 1 })}
             </p>
-            <span className="text-[10px] text-gray-500 font-medium">7-day normalized</span>
+            <span className="text-[9px] sm:text-[10px] text-gray-500 font-medium block truncate">7-day normalized</span>
           </div>
         </div>
       </motion.div>

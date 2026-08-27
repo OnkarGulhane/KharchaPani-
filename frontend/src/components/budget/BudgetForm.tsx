@@ -58,7 +58,7 @@ export default function BudgetForm({ isOpen, onClose, onSuccess }: Props) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -72,7 +72,7 @@ export default function BudgetForm({ isOpen, onClose, onSuccess }: Props) {
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="relative w-full max-w-md glass-panel p-6 rounded-3xl border border-gray-800 shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_30px_rgba(168,85,247,0.15)] z-10 overflow-hidden"
+          className="relative w-full max-w-md glass-panel p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-800 shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_30px_rgba(168,85,247,0.15)] z-10 max-h-[90dvh] overflow-y-auto overscroll-contain"
         >
           {/* Ambient Glow */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />

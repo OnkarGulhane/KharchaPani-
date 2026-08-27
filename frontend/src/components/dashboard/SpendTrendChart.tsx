@@ -135,38 +135,38 @@ export default function SpendTrendChart({ data, loading }: Props) {
       <div className="absolute -bottom-28 -left-28 w-56 h-56 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header with Title, Stats & Visual Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 z-10">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h3 className="text-base font-extrabold text-white tracking-wide flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-emerald-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 z-10">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm sm:text-base font-extrabold text-white tracking-wide flex items-center gap-2 truncate">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 flex-shrink-0" />
               <span>Spending Trend & Analytics</span>
             </h3>
             {maxItem && maxItem.amount > 0 && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
                 <Sparkles className="w-3 h-3 text-emerald-400" />
                 Peak: {formatAmount(maxItem.amount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+          <p className="text-xs text-gray-400 mt-1 flex items-center gap-2 flex-wrap">
             <span>Period Total:</span>
-            <span className="text-emerald-400 font-bold font-mono text-sm">
+            <span className="text-emerald-400 font-bold font-mono text-xs sm:text-sm">
               {formatAmount(totalTrend, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
             <span className="text-gray-600">•</span>
             <span>Avg/Day:</span>
-            <span className="text-gray-300 font-mono">
+            <span className="text-gray-300 font-mono text-xs">
               {formatAmount(avgDaily, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
           </p>
         </div>
 
         {/* 3-Way Mode Switcher: 3D Pillars | Pro Bar | Area Wave */}
-        <div className="flex items-center bg-gray-900/90 p-1 rounded-2xl border border-gray-800/90 self-start sm:self-auto shadow-inner">
+        <div className="flex items-center bg-gray-900/90 p-1 rounded-2xl border border-gray-800/90 self-start sm:self-auto overflow-x-auto max-w-full scrollbar-none shadow-inner flex-shrink-0">
           <button
             onClick={() => setViewMode("3d-pillars")}
-            className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 ${
+            className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap ${
               viewMode === "3d-pillars" ? "text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
@@ -177,13 +177,13 @@ export default function SpendTrendChart({ data, loading }: Props) {
                 transition={{ type: "spring", stiffness: 450, damping: 32 }}
               />
             )}
-            <Layers className="w-3.5 h-3.5 relative z-10 text-emerald-400" />
+            <Layers className="w-3.5 h-3.5 relative z-10 text-emerald-400 flex-shrink-0" />
             <span className="relative z-10">3D Pillars</span>
           </button>
 
           <button
             onClick={() => setViewMode("bar")}
-            className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 ${
+            className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap ${
               viewMode === "bar" ? "text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
@@ -194,13 +194,13 @@ export default function SpendTrendChart({ data, loading }: Props) {
                 transition={{ type: "spring", stiffness: 450, damping: 32 }}
               />
             )}
-            <BarChart3 className="w-3.5 h-3.5 relative z-10" />
+            <BarChart3 className="w-3.5 h-3.5 relative z-10 flex-shrink-0" />
             <span className="relative z-10">Bar Chart</span>
           </button>
 
           <button
             onClick={() => setViewMode("area")}
-            className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 ${
+            className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap ${
               viewMode === "area" ? "text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
@@ -211,14 +211,14 @@ export default function SpendTrendChart({ data, loading }: Props) {
                 transition={{ type: "spring", stiffness: 450, damping: 32 }}
               />
             )}
-            <TrendingUp className="w-3.5 h-3.5 relative z-10" />
+            <TrendingUp className="w-3.5 h-3.5 relative z-10 flex-shrink-0" />
             <span className="relative z-10">Area Wave</span>
           </button>
         </div>
       </div>
 
       {/* Main Visual Display Area */}
-      <div className="min-h-[260px] h-64 w-full relative z-10 flex flex-col justify-end">
+      <div className="min-h-[260px] h-64 w-full relative z-10 flex flex-col justify-end overflow-hidden">
         <AnimatePresence mode="wait">
           {/* MODE 1: 3D MICRO-INTERACTIVE GLASS PILLARS */}
           {viewMode === "3d-pillars" && (
@@ -228,10 +228,15 @@ export default function SpendTrendChart({ data, loading }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.25 }}
-              className="w-full h-full flex flex-col justify-end"
+              className="w-full h-full flex flex-col justify-end overflow-x-auto overflow-y-hidden pb-1 scrollbar-none sm:scrollbar-thin"
             >
-              {/* Pillar Columns Track */}
-              <div className="flex-1 flex items-end justify-around gap-2 px-2 pt-6 pb-2">
+              {/* Pillar Columns Track with Horizontal Touch Scroll Support */}
+              <div
+                className="flex-1 flex items-end justify-between sm:justify-around gap-2 px-1 pt-6 pb-2 min-w-full"
+                style={{
+                  minWidth: formattedData.length > 6 ? `${formattedData.length * 54}px` : "100%",
+                }}
+              >
                 {formattedData.map((item, idx) => {
                   const isHovered = hoveredIndex === idx;
                   const heightPercent = Math.max(
@@ -245,7 +250,8 @@ export default function SpendTrendChart({ data, loading }: Props) {
                       key={`pillar-${idx}`}
                       onMouseEnter={() => setHoveredIndex(idx)}
                       onMouseLeave={() => setHoveredIndex(null)}
-                      className="flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group/pillar max-w-[64px]"
+                      onClick={() => setHoveredIndex(hoveredIndex === idx ? null : idx)}
+                      className="flex-1 flex flex-col items-center justify-end h-full relative cursor-pointer group/pillar min-w-[44px] max-w-[64px]"
                     >
                       {/* Floating Amount Badge Above Pillar */}
                       <motion.div
@@ -256,7 +262,7 @@ export default function SpendTrendChart({ data, loading }: Props) {
                           scale: isHovered ? 1.08 : 1,
                         }}
                         transition={{ duration: 0.2 }}
-                        className={`mb-2 px-2 py-0.5 rounded-lg text-[11px] font-extrabold font-mono tracking-tight transition-all duration-200 ${
+                        className={`mb-2 px-1.5 sm:px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-extrabold font-mono tracking-tight transition-all duration-200 truncate max-w-full ${
                           isHovered
                             ? "bg-emerald-400 text-gray-950 shadow-[0_0_15px_rgba(52,211,153,0.8)] scale-105 z-30"
                             : isPeak
@@ -285,7 +291,7 @@ export default function SpendTrendChart({ data, loading }: Props) {
                         <motion.div
                           initial={{ height: 0 }}
                           animate={{ height: "100%" }}
-                          transition={{ duration: 0.5, delay: idx * 0.05, ease: "easeOut" }}
+                          transition={{ duration: 0.5, delay: idx * 0.04, ease: "easeOut" }}
                           className={`w-full -mt-1.5 rounded-b-xl transition-all duration-300 ${
                             isHovered ? "pillar-body-active" : "pillar-body"
                           }`}
@@ -304,14 +310,14 @@ export default function SpendTrendChart({ data, loading }: Props) {
                       {/* Date Label Below Pillar */}
                       <div className="mt-2 text-center select-none">
                         <p
-                          className={`text-[11px] font-bold transition-colors ${
+                          className={`text-[10px] sm:text-[11px] font-bold transition-colors ${
                             isHovered ? "text-emerald-300" : "text-gray-300"
                           }`}
                         >
                           {item.formattedLabel}
                         </p>
                         {item.subLabel && (
-                          <p className="text-[9px] text-gray-500 font-medium">
+                          <p className="text-[8px] sm:text-[9px] text-gray-500 font-medium">
                             {item.subLabel}
                           </p>
                         )}
@@ -322,13 +328,13 @@ export default function SpendTrendChart({ data, loading }: Props) {
                         <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.9 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          className="absolute bottom-20 z-40 bg-gray-950/95 backdrop-blur-2xl border border-emerald-500/40 p-3 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.2)] text-xs min-w-[150px] pointer-events-none"
+                          className="absolute bottom-20 z-40 bg-gray-950/95 backdrop-blur-2xl border border-emerald-500/40 p-3 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.2)] text-xs min-w-[140px] pointer-events-none"
                         >
                           <div className="flex items-center gap-1.5 text-gray-400 font-medium text-[11px] mb-1">
                             <Calendar className="w-3 h-3 text-emerald-400" />
                             <span>{item.fullDate}</span>
                           </div>
-                          <p className="text-emerald-400 font-extrabold text-base font-mono">
+                          <p className="text-emerald-400 font-extrabold text-sm sm:text-base font-mono">
                             {formatAmount(item.amount)}
                           </p>
                           {totalTrend > 0 && (
@@ -397,11 +403,11 @@ export default function SpendTrendChart({ data, loading }: Props) {
 
                   <YAxis
                     stroke="#9ca3af"
-                    fontSize={11}
+                    fontSize={10}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(val) => `${currency.symbol}${val}`}
-                    width={48}
+                    tickFormatter={(val) => `${currency.symbol}${val > 999 ? `${(val / 1000).toFixed(0)}k` : val}`}
+                    width={38}
                   />
 
                   <Tooltip
@@ -476,7 +482,7 @@ export default function SpendTrendChart({ data, loading }: Props) {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={formattedData}
-                  margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
+                  margin={{ top: 20, right: 10, left: -10, bottom: 0 }}
                 >
                   <defs>
                     <linearGradient id="areaGlowGradient" x1="0" y1="0" x2="0" y2="1">
@@ -503,11 +509,11 @@ export default function SpendTrendChart({ data, loading }: Props) {
 
                   <YAxis
                     stroke="#9ca3af"
-                    fontSize={11}
+                    fontSize={10}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(val) => `${currency.symbol}${val}`}
-                    width={48}
+                    tickFormatter={(val) => `${currency.symbol}${val > 999 ? `${(val / 1000).toFixed(0)}k` : val}`}
+                    width={38}
                   />
 
                   <Tooltip
@@ -540,13 +546,13 @@ export default function SpendTrendChart({ data, loading }: Props) {
                     fillOpacity={1}
                     fill="url(#areaGlowGradient)"
                     dot={{
-                      r: 5,
+                      r: 4,
                       fill: "#10b981",
                       stroke: "#064e3b",
                       strokeWidth: 2,
                     }}
                     activeDot={{
-                      r: 7.5,
+                      r: 7,
                       fill: "#34d399",
                       stroke: "#ffffff",
                       strokeWidth: 3,
@@ -561,14 +567,21 @@ export default function SpendTrendChart({ data, loading }: Props) {
       </div>
 
       {/* Footer Info & Quick Hint */}
-      <div className="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-[11px] text-gray-400">
+      <div className="mt-4 pt-3 border-t border-gray-800/80 flex items-center justify-between text-[11px] text-gray-400 flex-wrap gap-2">
         <span className="flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Interactive 3D timeline visualization</span>
+          <Zap className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+          <span>Interactive 3D timeline</span>
         </span>
-        <span className="text-gray-500 font-medium font-mono">
-          {formattedData.length} data point{formattedData.length > 1 ? "s" : ""}
-        </span>
+        <div className="flex items-center gap-2">
+          {viewMode === "3d-pillars" && formattedData.length > 6 && (
+            <span className="text-[10px] text-emerald-400/90 font-medium sm:hidden bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              ← Swipe pillars →
+            </span>
+          )}
+          <span className="text-gray-500 font-medium font-mono text-[10px] sm:text-[11px]">
+            {formattedData.length} point{formattedData.length > 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
     </motion.div>
   );

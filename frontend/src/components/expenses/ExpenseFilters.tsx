@@ -76,14 +76,14 @@ export default function ExpenseFilters({ filters, categories, onChange, onReset 
       </div>
 
       {/* Multi-Filter Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-800/60">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-3 border-t border-gray-800/60">
         {/* Category */}
         <div>
           <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Category</label>
           <select
             value={filters.category_id || ""}
             onChange={handleCategoryChange}
-            className="w-full bg-surface border border-gray-700 rounded-lg py-1.5 px-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+            className="w-full bg-surface border border-gray-700 rounded-xl py-2 px-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
@@ -100,7 +100,7 @@ export default function ExpenseFilters({ filters, categories, onChange, onReset 
           <select
             value={filters.payment_mode || ""}
             onChange={handlePaymentModeChange}
-            className="w-full bg-surface border border-gray-700 rounded-lg py-1.5 px-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+            className="w-full bg-surface border border-gray-700 rounded-xl py-2 px-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
           >
             <option value="">All Modes</option>
             <option value="UPI">UPI</option>
@@ -110,24 +110,35 @@ export default function ExpenseFilters({ filters, categories, onChange, onReset 
           </select>
         </div>
 
-        {/* Start / End Date */}
+        {/* From Date */}
         <div>
           <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">From Date</label>
           <input
             type="date"
             value={filters.start_date || ""}
             onChange={handleStartDate}
-            className="w-full bg-surface border border-gray-700 rounded-lg py-1.5 px-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+            className="w-full bg-surface border border-gray-700 rounded-xl py-2 px-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+          />
+        </div>
+
+        {/* To Date */}
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">To Date</label>
+          <input
+            type="date"
+            value={filters.end_date || ""}
+            onChange={handleEndDate}
+            className="w-full bg-surface border border-gray-700 rounded-xl py-2 px-2 text-xs text-white focus:outline-none focus:border-emerald-500"
           />
         </div>
 
         {/* Sort */}
-        <div>
+        <div className="xs:col-span-2 sm:col-span-1">
           <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Sort By</label>
           <select
             value={`${filters.sort_by || "date"}:${filters.order || "desc"}`}
             onChange={handleSortChange}
-            className="w-full bg-surface border border-gray-700 rounded-lg py-1.5 px-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+            className="w-full bg-surface border border-gray-700 rounded-xl py-2 px-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
           >
             <option value="date:desc">Newest First</option>
             <option value="date:asc">Oldest First</option>

@@ -104,12 +104,14 @@ export default function ExpensesPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <CurrencySelector />
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          <div className="hidden md:block">
+            <CurrencySelector />
+          </div>
 
           <button
             onClick={handleCreateClick}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
           >
             <Plus className="w-4 h-4" />
             <span>Log Expense</span>
@@ -117,16 +119,16 @@ export default function ExpensesPage() {
 
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-200 font-extrabold text-xs rounded-xl active:scale-95 transition-all shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-200 font-extrabold text-xs rounded-xl active:scale-95 transition-all shadow-sm whitespace-nowrap min-h-[36px]"
           >
             <Tags className="w-4 h-4 text-emerald-400" />
-            <span>Manage Categories</span>
+            <span>Categories</span>
           </button>
 
           <button
             onClick={handleRefreshAll}
             disabled={isRefreshing}
-            className={`p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm ${
+            className={`p-2 sm:p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm flex-shrink-0 ${
               isRefreshing
                 ? "text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-wait"
                 : "text-gray-400 hover:text-white"

@@ -28,7 +28,7 @@ export default function ConfirmDeleteModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -44,7 +44,7 @@ export default function ConfirmDeleteModal({
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="relative w-full max-w-md glass-panel p-6 rounded-3xl border border-rose-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_30px_rgba(244,63,94,0.2)] z-10 overflow-hidden"
+          className="relative w-full max-w-md glass-panel p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-rose-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.8),0_0_30px_rgba(244,63,94,0.2)] z-10 max-h-[90dvh] overflow-y-auto overscroll-contain"
         >
           {/* Ambient red glow */}
           <div className="absolute -top-20 -right-20 w-44 h-44 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />

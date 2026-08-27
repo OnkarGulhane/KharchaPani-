@@ -71,7 +71,7 @@ export default function CategoryDeleteDialog({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -85,12 +85,12 @@ export default function CategoryDeleteDialog({
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="relative w-full max-w-lg glass-panel p-6 rounded-2xl border border-amber-500/30 shadow-2xl z-10"
+          className="relative w-full max-w-lg glass-panel p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-amber-500/30 shadow-2xl z-10 max-h-[90dvh] overflow-y-auto overscroll-contain"
         >
           <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-800">
             <div className="flex items-center gap-2.5 text-amber-400">
-              <AlertTriangle className="w-5 h-5" />
-              <h3 className="text-lg font-bold text-white">Cannot Delete Immediately</h3>
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <h3 className="text-base sm:text-lg font-bold text-white">Cannot Delete Immediately</h3>
             </div>
             <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white">
               <X className="w-5 h-5" />
@@ -104,9 +104,9 @@ export default function CategoryDeleteDialog({
 
           <div className="space-y-4">
             {/* Option 1: Reassign */}
-            <div className="p-4 rounded-xl bg-surface border border-gray-700/80 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
-                <ArrowRightLeft className="w-4 h-4" />
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-surface border border-gray-700/80 space-y-3">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-400">
+                <ArrowRightLeft className="w-4 h-4 flex-shrink-0" />
                 <span>Option 1: Reassign Expenses (Recommended)</span>
               </div>
               <p className="text-xs text-gray-400">
@@ -114,11 +114,11 @@ export default function CategoryDeleteDialog({
               </p>
 
               {availableTargetCategories.length > 0 ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2">
                   <select
                     value={reassignTargetId || ""}
                     onChange={(e) => setReassignTargetId(Number(e.target.value))}
-                    className="flex-1 bg-card border border-gray-600 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500"
+                    className="flex-1 bg-card border border-gray-600 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500"
                   >
                     {availableTargetCategories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -129,7 +129,7 @@ export default function CategoryDeleteDialog({
                   <button
                     onClick={handleReassignAndDelete}
                     disabled={isSubmitting}
-                    className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold text-xs rounded-lg shadow-sm whitespace-nowrap"
+                    className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-sm whitespace-nowrap text-center"
                   >
                     Reassign & Delete
                   </button>
