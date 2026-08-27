@@ -4,12 +4,13 @@ const nextConfig = {
   ...(process.env.VERCEL ? {} : { output: "standalone" }),
   transpilePackages: ["recharts"],
   async rewrites() {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+    const renderBackend = "https://kharchapani-0lon.onrender.com/api/v1";
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || renderBackend;
     const cleanBase = apiBase.replace(/\/$/, "");
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${cleanBase}/:path*`,
+        destination: cleanBase.startsWith("http") ? `${cleanBase}/:path*` : `${renderBackend}/:path*`,
       },
     ];
   },
