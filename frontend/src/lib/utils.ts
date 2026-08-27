@@ -7,7 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   value: number | string | undefined | null,
-  options?: { minimumFractionDigits?: number; maximumFractionDigits?: number }
+  options?: {
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+    symbol?: string;
+    locale?: string;
+  }
 ): string {
   if (value === undefined || value === null) {
     return "0.00";
@@ -18,10 +23,14 @@ export function formatCurrency(
   }
   const maxDigits = options?.maximumFractionDigits ?? 2;
   const minDigits = Math.min(options?.minimumFractionDigits ?? 2, maxDigits);
-  return num.toLocaleString("en-IN", {
+  const locale = options?.locale ?? "en-IN";
+
+  const formatted = num.toLocaleString(locale, {
     minimumFractionDigits: minDigits,
     maximumFractionDigits: maxDigits,
   });
+
+  return options?.symbol ? `${options.symbol}${formatted}` : formatted;
 }
 
 export function formatNumber(

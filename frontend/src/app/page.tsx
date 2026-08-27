@@ -14,6 +14,7 @@ import {
 import ReportPeriodSelector from "@/components/dashboard/ReportPeriodSelector";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import BudgetStatus from "@/components/dashboard/BudgetStatus";
+import BudgetAlertBanner from "@/components/dashboard/BudgetAlertBanner";
 import CategoryPieChart from "@/components/dashboard/CategoryPieChart";
 import SpendTrendChart from "@/components/dashboard/SpendTrendChart";
 import MonthComparisonCard from "@/components/dashboard/MonthComparisonCard";
@@ -23,9 +24,11 @@ import RecentExpenses from "@/components/dashboard/RecentExpenses";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
 import BudgetForm from "@/components/budget/BudgetForm";
 import CategoryManager from "@/components/categories/CategoryManager";
+import CurrencySelector from "@/components/common/CurrencySelector";
 
 import { Plus, Tags, RefreshCw, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<PeriodType>("month");
@@ -61,10 +64,25 @@ export default function DashboardPage() {
     queryFn: () => getAverageSpend(period),
   });
 
+  // Complete Parallel Refetch on Refresh Button
   const handleRefreshAll = async () => {
+    if (isRefreshing) return;
     setIsRefreshing(true);
-    await queryClient.invalidateQueries();
-    setTimeout(() => setIsRefreshing(false), 600);
+    try {
+      await Promise.all([
+        refetchSummary(),
+        refetchCharts(),
+        refetchComparison(),
+        refetchTopCat(),
+        refetchAvgSpend(),
+        queryClient.invalidateQueries(),
+      ]);
+      toast.success("Dashboard data refreshed! ✨");
+    } catch (err: any) {
+      toast.error("Failed to refresh dashboard");
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   return (
@@ -76,26 +94,29 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
               Dashboard Overview
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
-              <Sparkles className="w-3 h-3" />
-              Live
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" />
+              Live Analytics
             </span>
           </div>
           <p className="text-xs md:text-sm text-gray-400 mt-1">
-            Real-time financial analytics, timeline trend breakdown, and budget goals.
+            Real-time financial analytics, 3D timeline trends, and budget goals.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <ReportPeriodSelector period={period} onChange={setPeriod} />
 
+          {/* Currency Switcher in Header */}
+          <CurrencySelector />
+
           <button
             onClick={() => setIsExpenseModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Add Expense</span>
@@ -109,22 +130,32 @@ export default function DashboardPage() {
             <Tags className="w-4 h-4" />
           </button>
 
+          {/* Interactive Fixed Refresh Button */}
           <button
             onClick={handleRefreshAll}
-            className={`p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-400 hover:text-white rounded-xl active:scale-95 transition-all shadow-sm ${
-              isRefreshing ? "text-emerald-400" : ""
+            disabled={isRefreshing}
+            className={`p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm ${
+              isRefreshing
+                ? "text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-wait"
+                : "text-gray-400 hover:text-white"
             }`}
-            title="Refresh Data"
+            title="Refresh All Dashboard Data"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
           </button>
         </div>
       </div>
 
+      {/* Critical Over-Budget Alert Banner */}
+      <BudgetAlertBanner
+        budgetStatus={summary?.budget_status}
+        onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+      />
+
       {/* Summary Cards */}
       <SummaryCards summary={summary} loading={loadingSummary} />
 
-      {/* Live Budget Goal Banner */}
+      {/* Live Budget Goal Status */}
       <BudgetStatus
         status={summary?.budget_status}
         loading={loadingSummary}

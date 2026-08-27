@@ -10,11 +10,15 @@ import ExpenseFilters from "@/components/expenses/ExpenseFilters";
 import ExpenseList from "@/components/expenses/ExpenseList";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
 import CategoryManager from "@/components/categories/CategoryManager";
+import CurrencySelector from "@/components/common/CurrencySelector";
 
-import { Plus, Tags, RefreshCw } from "lucide-react";
+import { Plus, Tags, RefreshCw, Receipt } from "lucide-react";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [filters, setFilters] = useState<ExpenseFilterParams>({
     page: 1,
@@ -41,8 +45,21 @@ export default function ExpensesPage() {
     queryFn: () => getExpenses(filters),
   });
 
-  const handleRefreshAll = () => {
-    queryClient.invalidateQueries();
+  const handleRefreshAll = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        refetchExpenses(),
+        queryClient.invalidateQueries({ queryKey: ["expenses"] }),
+        queryClient.invalidateQueries({ queryKey: ["categories"] }),
+      ]);
+      toast.success("Expense records refreshed! ✨");
+    } catch {
+      toast.error("Failed to refresh expenses");
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   const handleResetFilters = () => {
@@ -65,22 +82,34 @@ export default function ExpensesPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6 pb-12"
+    >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            Expenses & Categories
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              Expenses & Categories
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+              <Receipt className="w-3.5 h-3.5" />
+              Transactions
+            </span>
+          </div>
           <p className="text-sm text-gray-400 mt-1">
             Log transactions, search, filter, and manage custom categories.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <CurrencySelector />
+
           <button
             onClick={handleCreateClick}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs rounded-xl shadow-glow transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Log Expense</span>
@@ -88,7 +117,7 @@ export default function ExpensesPage() {
 
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-surface hover:bg-gray-800 border border-gray-700 text-gray-200 font-semibold text-xs rounded-xl transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-200 font-extrabold text-xs rounded-xl active:scale-95 transition-all shadow-sm"
           >
             <Tags className="w-4 h-4 text-emerald-400" />
             <span>Manage Categories</span>
@@ -96,10 +125,15 @@ export default function ExpensesPage() {
 
           <button
             onClick={handleRefreshAll}
-            className="p-2.5 bg-surface hover:bg-gray-800 border border-gray-700 text-gray-400 hover:text-white rounded-xl transition-all"
+            disabled={isRefreshing}
+            className={`p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm ${
+              isRefreshing
+                ? "text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-wait"
+                : "text-gray-400 hover:text-white"
+            }`}
             title="Refresh"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
           </button>
         </div>
       </div>
@@ -141,6 +175,6 @@ export default function ExpensesPage() {
           onSuccess={handleRefreshAll}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
