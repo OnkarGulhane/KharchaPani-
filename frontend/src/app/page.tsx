@@ -24,13 +24,15 @@ import ExpenseForm from "@/components/expenses/ExpenseForm";
 import BudgetForm from "@/components/budget/BudgetForm";
 import CategoryManager from "@/components/categories/CategoryManager";
 
-import { Plus, Target, Tags, RefreshCw } from "lucide-react";
+import { Plus, Tags, RefreshCw, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<PeriodType>("month");
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -59,25 +61,41 @@ export default function DashboardPage() {
     queryFn: () => getAverageSpend(period),
   });
 
-  const handleRefreshAll = () => {
-    queryClient.invalidateQueries();
+  const handleRefreshAll = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries();
+    setTimeout(() => setIsRefreshing(false), 600);
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6 pb-12"
+    >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Dashboard Overview</h1>
-          <p className="text-sm text-gray-400 mt-1">Real-time spend analytics, charts, and budget status.</p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              Dashboard Overview
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm">
+              <Sparkles className="w-3 h-3" />
+              Live
+            </span>
+          </div>
+          <p className="text-xs md:text-sm text-gray-400 mt-1">
+            Real-time financial analytics, timeline trend breakdown, and budget goals.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <ReportPeriodSelector period={period} onChange={setPeriod} />
 
           <button
             onClick={() => setIsExpenseModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs rounded-xl shadow-glow transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Add Expense</span>
@@ -85,7 +103,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="p-2 bg-surface hover:bg-gray-800 border border-gray-700 text-gray-300 rounded-xl transition-all"
+            className="p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-300 hover:text-white rounded-xl active:scale-95 transition-all shadow-sm"
             title="Manage Categories"
           >
             <Tags className="w-4 h-4" />
@@ -93,10 +111,12 @@ export default function DashboardPage() {
 
           <button
             onClick={handleRefreshAll}
-            className="p-2 bg-surface hover:bg-gray-800 border border-gray-700 text-gray-400 hover:text-white rounded-xl transition-all"
+            className={`p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-400 hover:text-white rounded-xl active:scale-95 transition-all shadow-sm ${
+              isRefreshing ? "text-emerald-400" : ""
+            }`}
             title="Refresh Data"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
           </button>
         </div>
       </div>
@@ -151,6 +171,6 @@ export default function DashboardPage() {
           onSuccess={handleRefreshAll}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

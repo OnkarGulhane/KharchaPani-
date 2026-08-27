@@ -4,6 +4,7 @@ import React from "react";
 import { AverageSpend } from "@/types/dashboard";
 import { Calculator } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface Props {
   avgSpend?: AverageSpend | null;
@@ -12,33 +13,44 @@ interface Props {
 
 export default function AverageSpendCard({ avgSpend, loading }: Props) {
   if (loading) {
-    return <div className="h-32 glass-card rounded-2xl animate-pulse p-4" />;
+    return <div className="h-40 glass-card rounded-2xl animate-pulse p-5" />;
   }
 
   const perDay = avgSpend?.average_daily_spend;
   const perWeek = avgSpend?.average_weekly_spend;
 
   return (
-    <div className="glass-card p-5 rounded-2xl border border-gray-800 flex flex-col justify-between">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      className="glass-card p-5 rounded-2xl border border-gray-800/80 shadow-lg flex flex-col justify-between group hover:border-gray-700/80 transition-all duration-300"
+    >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
           Normalized Average Spend
         </span>
-        <div className="p-2 rounded-xl bg-surface/60 border border-gray-700/40 text-emerald-400">
+        <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
           <Calculator className="w-4 h-4" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-3 pt-2 border-t border-gray-800/60">
-        <div>
-          <span className="text-xs text-gray-400">Daily Avg</span>
-          <p className="text-lg font-bold text-white mt-0.5">₹{formatCurrency(perDay, { maximumFractionDigits: 1 })}</p>
+      <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-800/80">
+        <div className="space-y-0.5">
+          <span className="text-[11px] font-medium text-gray-400">Daily Average</span>
+          <p className="text-xl font-extrabold text-white">
+            ₹{formatCurrency(perDay, { maximumFractionDigits: 1 })}
+          </p>
+          <span className="text-[10px] text-gray-500">Per active day</span>
         </div>
-        <div>
-          <span className="text-xs text-gray-400">Weekly Avg</span>
-          <p className="text-lg font-bold text-white mt-0.5">₹{formatCurrency(perWeek, { maximumFractionDigits: 1 })}</p>
+        <div className="space-y-0.5">
+          <span className="text-[11px] font-medium text-gray-400">Weekly Average</span>
+          <p className="text-xl font-extrabold text-white">
+            ₹{formatCurrency(perWeek, { maximumFractionDigits: 1 })}
+          </p>
+          <span className="text-[10px] text-gray-500">7-day estimate</span>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

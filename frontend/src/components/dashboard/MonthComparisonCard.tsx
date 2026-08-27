@@ -2,8 +2,9 @@
 
 import React from "react";
 import { PeriodComparison } from "@/types/dashboard";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface Props {
   comparison?: PeriodComparison | null;
@@ -12,7 +13,7 @@ interface Props {
 
 export default function MonthComparisonCard({ comparison, loading }: Props) {
   if (loading) {
-    return <div className="h-32 glass-card rounded-2xl animate-pulse p-4" />;
+    return <div className="h-40 glass-card rounded-2xl animate-pulse p-5" />;
   }
 
   const curr = comparison?.current_period_total ?? 0;
@@ -21,16 +22,21 @@ export default function MonthComparisonCard({ comparison, loading }: Props) {
   const isUp = comparison?.is_increase ?? false;
 
   return (
-    <div className="glass-card p-5 rounded-2xl border border-gray-800 flex flex-col justify-between">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      className="glass-card p-5 rounded-2xl border border-gray-800/80 shadow-lg flex flex-col justify-between group hover:border-gray-700/80 transition-all duration-300 relative overflow-hidden"
+    >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
           Period Comparison (MoM)
         </span>
         <div
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-sm ${
             isUp
-              ? "bg-red-500/10 text-red-400 border-red-500/20"
-              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+              ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+              : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
           }`}
         >
           {isUp ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -38,15 +44,21 @@ export default function MonthComparisonCard({ comparison, loading }: Props) {
         </div>
       </div>
 
-      <div className="mt-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-bold text-white">₹{formatCurrency(curr, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-          <span className="text-xs text-gray-400">vs prev ₹{formatCurrency(prev, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+      <div className="mt-4">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-2xl font-extrabold text-white">
+            ₹{formatCurrency(curr, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </span>
+          <span className="text-xs text-gray-400 font-medium">
+            vs prev ₹{formatCurrency(prev, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </span>
         </div>
-        <p className="text-xs text-gray-400 mt-1">
-          {isUp ? "Spend increased compared to previous period" : "Great! Spend decreased compared to previous period"}
+        <p className="text-xs text-gray-400 mt-1.5 font-medium leading-relaxed">
+          {isUp
+            ? "⚠️ Spending increased compared to the previous timeline cycle."
+            : "✨ Great job! Spending is lower than the previous cycle."}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
