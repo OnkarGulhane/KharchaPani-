@@ -5,12 +5,15 @@ const nextConfig = {
   transpilePackages: ["recharts"],
   async rewrites() {
     const renderBackend = "https://kharchapani-0lon.onrender.com/api/v1";
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || renderBackend;
-    const cleanBase = apiBase.replace(/\/$/, "");
+    let apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || renderBackend).trim().replace(/\/$/, "");
+    if (apiBase.startsWith("http") && !apiBase.endsWith("/api/v1")) {
+      apiBase = `${apiBase}/api/v1`;
+    }
+    const destinationUrl = apiBase.startsWith("http") ? `${apiBase}/:path*` : `${renderBackend}/:path*`;
     return [
       {
         source: "/api/v1/:path*",
-        destination: cleanBase.startsWith("http") ? `${cleanBase}/:path*` : `${renderBackend}/:path*`,
+        destination: destinationUrl,
       },
     ];
   },
