@@ -3,6 +3,7 @@ FROM python:3.11-slim
 # Prevent Python from writing pyc files to disc and enable stdout/stderr buffering
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
     PORT=8000
 
 WORKDIR /app
