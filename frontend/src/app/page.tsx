@@ -25,8 +25,9 @@ import ExpenseForm from "@/components/expenses/ExpenseForm";
 import BudgetForm from "@/components/budget/BudgetForm";
 import CategoryManager from "@/components/categories/CategoryManager";
 import CurrencySelector from "@/components/common/CurrencySelector";
+import { usePWA } from "@/hooks/usePWA";
 
-import { Plus, Tags, RefreshCw, Sparkles } from "lucide-react";
+import { Plus, Tags, RefreshCw, Sparkles, Smartphone, Download, QrCode } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { isInstalled, setShowInstallModal } = usePWA();
 
   const queryClient = useQueryClient();
 
@@ -113,6 +115,17 @@ export default function DashboardPage() {
 
           {/* Currency Switcher in Header */}
           <CurrencySelector />
+
+          {!isInstalled && (
+            <button
+              onClick={() => setShowInstallModal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+              title="Install Kharcha Pani App on your Mobile Phone"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-400 animate-pulse" />
+              <span>📱 Install on Phone</span>
+            </button>
+          )}
 
           <button
             onClick={() => setIsExpenseModalOpen(true)}
