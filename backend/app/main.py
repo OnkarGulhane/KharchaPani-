@@ -1,9 +1,21 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.init_db import init_db
 from app.core.security import AccessKeyMiddleware
 from app.routers import health, categories, expenses, budget, dashboard
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await init_db()
+    except Exception as e:
+        print(f"Database initialization warning: {e}")
+    yield
+
 
 app = FastAPI(
     title="Kharcha Pani API",
@@ -11,6 +23,7 @@ app = FastAPI(
     version="2.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS Middleware - Ensure all local dev ports and origins are allowed
