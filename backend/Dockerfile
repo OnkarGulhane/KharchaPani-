@@ -25,4 +25,4 @@ COPY . .
 EXPOSE ${PORT}
 
 # Run database migrations with alembic and start Uvicorn server dynamically on $PORT
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "PYTHONPATH=/app alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
