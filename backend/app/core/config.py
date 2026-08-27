@@ -35,7 +35,11 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def parse_database_url(cls, v: str) -> str:
+        import os
         if isinstance(v, str):
+            # Fallback to SQLite if localhost PostgreSQL is specified in a cloud deployment (Render/Docker)
+            if ("localhost:5432" in v or "127.0.0.1:5432" in v) and os.getenv("RENDER"):
+                return "sqlite+aiosqlite:///./kharchapani.db"
             if v.startswith("postgres://"):
                 return v.replace("postgres://", "postgresql+asyncpg://", 1)
             if v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
