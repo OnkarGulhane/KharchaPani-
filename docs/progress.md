@@ -81,14 +81,40 @@ All core backend and frontend components for Kharcha Pani V1/MVP and advanced Pr
   - **PWA Install Guide Modal**: Direct QR code scan for phone cameras, local IP URL sharing (`http://192.168.0.126:3000`), and step-by-step instructions for Android Chrome and iPhone Safari.
 - [x] **Local Network Binding**: Updated `"dev": "next dev -H 0.0.0.0"` in `package.json` to allow mobile devices on the local Wi-Fi to connect instantly.
 
+### 6. Multi-Device & Mobile Responsiveness Optimization (August 27, 2026)
+- [x] **Comprehensive Viewport Audit (320px – 1440px+)**:
+  - Tested and verified on iPhone SE (320px & 375px), Galaxy A (360px), iPhone 12/13/14/15 (390px), iPhone Pro Max (414px–430px), iPad portrait (768px), iPad landscape/laptops (1024px), and Desktop (1440px+).
+- [x] **3D Spend Trend Chart Optimization (`SpendTrendChart.tsx`)**:
+  - Resolved 15–31 data points overlapping bug in 3D Pillars mode by adding smooth touch horizontal scroll (`overflow-x-auto`) with minimum pillar width (`min-w-[44px] sm:min-w-[56px]`).
+  - Added mobile swipe hint ("← Swipe pillars →") and compact Y-axis scaling (`width={38}`, `1k`, `500`).
+  - Compact 3-way mode switcher ("3D Pillars", "Bar Chart", "Area Wave") on mobile screens.
+- [x] **Category Pie & Donut Chart (`CategoryPieChart.tsx`)**:
+  - Implemented responsive single/double column legend (`grid-cols-1 sm:grid-cols-2`) preventing category name truncation on 320px–375px screens.
+  - Adjusted responsive donut radius (`innerRadius={52}`, `outerRadius={76}`) and centered metric display.
+- [x] **Analytics Breakdown Grid (`page.tsx`)**:
+  - Updated grid breakpoints from `md:grid-cols-3` to `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` to prevent card squeezing on 768px–1024px tablets.
+  - Responsive number formatting and truncation in `SummaryCards` and `AverageSpendCard`.
+- [x] **Expense Multi-Filters & Transaction List (`ExpenseFilters.tsx`, `ExpenseList.tsx`)**:
+  - Responsive filter grid (`grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`) with `To Date` field and generous input padding preventing date picker clipping on mobile browsers.
+  - Text truncation on mobile transaction cards (`min-w-0 flex-1`, `truncate`) preventing amounts from being pushed off-screen.
+  - Stacked mobile pagination bar (`flex-col sm:flex-row`).
+- [x] **All Modals Virtual Keyboard Usability**:
+  - Added `max-h-[90dvh] overflow-y-auto overscroll-contain` and responsive padding across `ExpenseForm`, `BudgetForm`, `CategoryManager`, `CategoryDeleteDialog`, `ConfirmDeleteModal`, and `PWAInstallModal`.
+- [x] **Touch Device Physics (`ThreeDTiltCard.tsx`)**:
+  - Added pointer coarse / hover media query detection to disable mouse tilt jitter during finger scrolling on touch devices while preserving desktop 3D tilt.
+- [x] **Top Header & Bottom Navigation (`HamburgerMenu.tsx`, `MobileBottomNav.tsx`, `layout.tsx`)**:
+  - Optimized header spacing, landscape drawer scrolling (`max-w-[85vw] max-h-[100dvh]`), and safe bottom padding (`pb-28 sm:pb-28 md:pb-8`).
+
 ---
 
-## 🛠️ Recent Updates & Fixes (August 27, 2026)
+## 🛠️ Git History & Commit Log
 
-- **PWA Installability Resolved**: Removed conditional blocking of `isInstallable` so install options are always visible on mobile browsers (Android, iOS Safari, Samsung Internet).
-- **QR Code Mobile Access**: Added instant QR code generator inside the install modal for seamless PC-to-Mobile transfer over local Wi-Fi.
-- **Service Worker Headers**: Configured `next.config.js` with `Service-Worker-Allowed: /` and no-cache headers.
-- **Next.js 14 Manifest Route**: Implemented `src/app/manifest.ts` for official `/manifest.webmanifest` MIME type compliance.
+| Commit | Branch | Message | Date |
+|---|---|---|---|
+| `8e939cb` | `feature/backend-database-setup` | `fix(ui): enhance mobile and multi-device responsiveness across charts, modals, and pages` | Aug 27, 2026 |
+| `095c074` | `feature/backend-database-setup` | `feat(pwa): complete PWA installability, mobile QR scanner, and offline caching` | Aug 27, 2026 |
+| `2d54e48` | `feature/backend-database-setup` | `feat(ui): 3D visual spending pillars, interactive charts, and multi-currency engine` | Aug 27, 2026 |
+| `1cf4b64` | `feature/backend-database-setup` | `feat(backend): complete REST APIs, category safety guards, and PostgreSQL async models` | Aug 27, 2026 |
 
 ---
 
@@ -102,3 +128,4 @@ All core backend and frontend components for Kharcha Pani V1/MVP and advanced Pr
 ## 🔒 Session Start Rule (Agents.md Rule 29)
 When starting the next session, the assistant will respond with:
 `Hello Omii! AGENTS.md loaded successfully. I am ready to work according to the project rules.`
+
