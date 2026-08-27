@@ -13,7 +13,15 @@ class Settings(BaseSettings):
     DATABASE_URL_POOLED: Union[str, None] = None
 
     # CORS
-    ALLOWED_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "https://kharcha-pani.vercel.app"]
+    ALLOWED_ORIGINS: Union[List[str], str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "https://kharcha-pani.vercel.app",
+    ]
 
     # API
     API_V1_PREFIX: str = "/api/v1"
