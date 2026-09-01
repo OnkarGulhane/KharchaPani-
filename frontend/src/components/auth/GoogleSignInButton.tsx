@@ -13,6 +13,23 @@ export const GoogleSignInButton: React.FC = () => {
 
   const hasGoogleClientId = Boolean(env.googleClientId && env.googleClientId.trim());
 
+  const triggerDirectOAuth = () => {
+    if (typeof window === "undefined") return;
+    setLoading(true);
+    const origin = window.location.origin;
+    const redirectUri = `${origin}/auth/callback`;
+    const clientId =
+      env.googleClientId ||
+      "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+      clientId
+    )}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=token&scope=openid%20email%20profile&prompt=select_account`;
+
+    window.location.href = googleAuthUrl;
+  };
+
   const handleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setLoading(true);
@@ -27,11 +44,18 @@ export const GoogleSignInButton: React.FC = () => {
     onError: (errorResponse) => {
       setLoading(false);
       console.error("Google OAuth error:", errorResponse);
-      toast.error("Google sign-in failed", {
-        description:
-          errorResponse.error_description ||
-          "Please verify that this domain is added to Authorized JavaScript Origins in Google Cloud Console.",
-      });
+      // Fallback to direct redirect if popup fails
+      const err = (errorResponse as any)?.error;
+      if (err !== "popup_closed" && err !== "popup_closed_by_user") {
+        toast.info("Opening Google authentication...");
+        triggerDirectOAuth();
+      }
+    },
+    onNonOAuthError: (nonOAuthError) => {
+      setLoading(false);
+      console.error("Google non-OAuth error:", nonOAuthError);
+      // Fallback to direct redirect if GSI script was blocked or not ready
+      triggerDirectOAuth();
     },
   });
 
@@ -42,13 +66,17 @@ export const GoogleSignInButton: React.FC = () => {
       });
       return;
     }
+
     try {
-      handleLogin();
-    } catch (err: any) {
-      setLoading(false);
-      toast.error("Could not launch Google popup", {
-        description: err?.message || "Please enable popups for this website in your browser settings.",
-      });
+      // Check if google SDK is loaded in window
+      if (typeof window !== "undefined" && (window as any).google?.accounts?.oauth2) {
+        handleLogin();
+      } else {
+        // If Google SDK is not loaded yet or blocked, use direct OAuth redirect
+        triggerDirectOAuth();
+      }
+    } catch {
+      triggerDirectOAuth();
     }
   };
 
