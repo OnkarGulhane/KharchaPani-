@@ -46,6 +46,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initAuth = async () => {
       try {
+        // Fast path: Check if we have an active access token in session
+        try {
+          const userData = await authApi.getMe();
+          if (isMounted) {
+            setUser(userData);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // Access token expired or missing, proceed to silent refresh
+        }
+
         const refreshData = await authApi.refresh();
         if (refreshData?.access_token && isMounted) {
           setAccessToken(refreshData.access_token);

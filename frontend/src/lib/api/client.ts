@@ -6,10 +6,29 @@ let refreshSubscribers: ((token: string) => void)[] = [];
 
 export const setAccessToken = (token: string | null): void => {
   inMemoryAccessToken = token;
+  if (typeof window !== "undefined") {
+    try {
+      if (token) {
+        sessionStorage.setItem("kharcha_access_token", token);
+      } else {
+        sessionStorage.removeItem("kharcha_access_token");
+      }
+    } catch {
+      // Ignore quota/private mode errors
+    }
+  }
 };
 
 export const getAccessToken = (): string | null => {
-  return inMemoryAccessToken;
+  if (inMemoryAccessToken) return inMemoryAccessToken;
+  if (typeof window !== "undefined") {
+    try {
+      return sessionStorage.getItem("kharcha_access_token");
+    } catch {
+      return null;
+    }
+  }
+  return null;
 };
 
 export const getAppKey = (): string => {

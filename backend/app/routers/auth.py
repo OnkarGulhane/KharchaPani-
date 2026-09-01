@@ -27,15 +27,20 @@ REFRESH_COOKIE_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
 
 def set_refresh_cookie(response: Response, refresh_token: str) -> None:
-    """Set HttpOnly, SameSite=Lax, Secure cookie for refresh token."""
+    """Set HttpOnly cookie for refresh token.
+    
+    In production (cross-origin between Vercel and Render), SameSite must be 'none' with Secure=True.
+    In local development (localhost), SameSite='lax' with Secure=False.
+    """
     is_prod = settings.APP_ENV != "development"
+    samesite_val = "none" if is_prod else "lax"
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,
         max_age=REFRESH_COOKIE_MAX_AGE,
         httponly=True,
         secure=is_prod,
-        samesite="lax",
+        samesite=samesite_val,
         path="/",
     )
 
@@ -43,13 +48,12 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 def clear_refresh_cookie(response: Response) -> None:
     """Clear refresh token cookie."""
     is_prod = settings.APP_ENV != "development"
-    response.set_cookie(
+    samesite_val = "none" if is_prod else "lax"
+    response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
-        value="",
-        max_age=0,
         httponly=True,
         secure=is_prod,
-        samesite="lax",
+        samesite=samesite_val,
         path="/",
     )
 
