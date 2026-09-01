@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.init_db import init_db
 from app.core.security import AccessKeyMiddleware
-from app.routers import health, categories, expenses, budget, dashboard
+from app.routers import auth, budget, categories, dashboard, expenses, health
 
 
 @asynccontextmanager
@@ -19,14 +19,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Kharcha Pani API",
-    description="Personal Expense Tracker REST API (V1 / MVP)",
-    version="2.0",
+    description="Personal Expense Tracker REST API with Multi-User Authentication & Data Isolation",
+    version="3.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
 )
 
-# CORS Middleware - Ensure all local dev ports and origins are allowed
+# CORS Middleware with allow_credentials=True for HttpOnly cookies
 dev_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -47,7 +47,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Shared Access Key Middleware (V1 Public Exposure Protection)
+# Access Key Middleware (Gracefully allows Auth routes and Bearer tokens)
 app.add_middleware(AccessKeyMiddleware)
 
 # Health router (unprotected)
@@ -55,6 +55,7 @@ app.include_router(health.router)
 
 # API Routers under /api/v1
 api_v1_prefix = settings.API_V1_PREFIX
+app.include_router(auth.router, prefix=api_v1_prefix)
 app.include_router(categories.router, prefix=api_v1_prefix)
 app.include_router(expenses.router, prefix=api_v1_prefix)
 app.include_router(budget.router, prefix=api_v1_prefix)
@@ -65,7 +66,7 @@ app.include_router(dashboard.router, prefix=api_v1_prefix)
 async def root():
     return {
         "app": "Kharcha Pani API",
-        "version": "2.0",
+        "version": "3.0",
         "docs": "/docs",
         "health": "/health",
         "api_v1": api_v1_prefix,

@@ -1,27 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, KeyRound, Wallet, LogOut, Download } from "lucide-react";
-import { removeAppKey } from "@/lib/api/client";
+import { LayoutDashboard, Receipt, Wallet, LogOut, Download, ShieldAlert } from "lucide-react";
 import CurrencySelector from "@/components/common/CurrencySelector";
 import { usePWA } from "@/hooks/usePWA";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { isInstalled, promptInstall } = usePWA();
+  const { user, logout, logoutAll } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Expenses & Categories", href: "/expenses", icon: Receipt },
-    { name: "Access Key", href: "/access", icon: KeyRound },
   ];
-
-  const handleLogout = () => {
-    removeAppKey();
-    window.location.href = "/access";
-  };
 
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 glass-panel border-r border-gray-800 p-5 select-none z-30 justify-between">
@@ -33,9 +29,22 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="font-extrabold text-lg text-white tracking-wide">Kharcha Pani</h1>
-            <p className="text-xs text-gray-400">Expense Tracker</p>
+            <p className="text-xs text-gray-400">Personal Expense Tracker</p>
           </div>
         </div>
+
+        {/* User Badge */}
+        {user && (
+          <div className="mb-5 p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow">
+              {user.full_name?.charAt(0)?.toUpperCase() || "U"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
 
         {/* Currency Switcher in Sidebar */}
         <div className="mb-5 px-1">
@@ -78,14 +87,23 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer Info / Key Reset */}
-      <div className="pt-4 border-t border-gray-800/80">
+      {/* Footer Info / Logout */}
+      <div className="pt-4 border-t border-gray-800/80 space-y-1">
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors duration-200"
+          onClick={() => logout()}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors duration-200"
         >
           <LogOut className="w-4 h-4" />
-          <span>Reset Access Key</span>
+          <span>Sign Out</span>
+        </button>
+
+        <button
+          onClick={() => logoutAll()}
+          title="Revoke sessions on all logged-in devices"
+          className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors duration-200"
+        >
+          <ShieldAlert className="w-3.5 h-3.5" />
+          <span>Sign Out All Devices</span>
         </button>
       </div>
     </aside>

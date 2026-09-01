@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
+from app.core.dependencies import get_current_active_user
+from app.models.user import User
+from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseUpdate
 from app.schemas.response import APIResponse, PaginatedData
 from app.services.expense_service import ExpenseService
 
@@ -25,9 +27,10 @@ async def get_expenses(
     payment_mode: Optional[str] = Query(None),
     sort_by: str = Query("date", pattern="^(date|amount|category|title)$"),
     order: str = Query("desc", pattern="^(asc|desc)$"),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Fetch paginated expenses with search, multi-filter, and sorting capabilities (usable together)."""
+    """Fetch paginated expenses for the authenticated user."""
     paginated = await ExpenseService.get_expenses(
         db,
         page=page,
@@ -41,26 +44,40 @@ async def get_expenses(
         payment_mode=payment_mode,
         sort_by=sort_by,
         order=order,
+        user_id=current_user.id,
     )
     return APIResponse(data=paginated)
 
 
 @router.post("", response_model=APIResponse[ExpenseResponse], status_code=status.HTTP_201_CREATED)
-async def create_expense(data: ExpenseCreate, db: AsyncSession = Depends(get_db)):
-    """Log a new expense entry."""
-    expense = await ExpenseService.create_expense(db, data)
+async def create_expense(
+    data: ExpenseCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Log a new expense entry for the authenticated user."""
+    expense = await ExpenseService.create_expense(db, data, user_id=current_user.id)
     return APIResponse(data=expense, message="Expense logged successfully")
 
 
 @router.put("/{expense_id}", response_model=APIResponse[ExpenseResponse])
-async def update_expense(expense_id: int, data: ExpenseUpdate, db: AsyncSession = Depends(get_db)):
-    """Update an existing expense entry."""
-    expense = await ExpenseService.update_expense(db, expense_id, data)
+async def update_expense(
+    expense_id: int,
+    data: ExpenseUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update an existing expense entry owned by the authenticated user."""
+    expense = await ExpenseService.update_expense(db, expense_id, data, user_id=current_user.id)
     return APIResponse(data=expense, message="Expense updated successfully")
 
 
 @router.delete("/{expense_id}", response_model=APIResponse[dict])
-async def delete_expense(expense_id: int, db: AsyncSession = Depends(get_db)):
-    """Delete an expense entry."""
-    result = await ExpenseService.delete_expense(db, expense_id)
+async def delete_expense(
+    expense_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete an expense entry owned by the authenticated user."""
+    result = await ExpenseService.delete_expense(db, expense_id, user_id=current_user.id)
     return APIResponse(data=result, message="Expense deleted successfully")

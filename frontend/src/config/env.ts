@@ -22,4 +22,5 @@ const getSanitizedApiBaseUrl = (): string => {
 export const env = {
   apiBaseUrl: getSanitizedApiBaseUrl(),
   appEnv: process.env.NEXT_PUBLIC_APP_ENV || "development",
+  googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
 };

@@ -1,17 +1,17 @@
+import pytest
 import pytest_asyncio
+import httpx
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.main import app
 from app.core.database import get_db
-from app.models import Base
-from app.seed.seed_categories import seed_starter_categories
+from app.models import Base, User
+from app.core.security import create_access_token, get_password_hash
+from app.seed.seed_categories import seed_user_starter_categories
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_test_database():
-    """Fixture that creates a fresh in-memory SQLite database per test.
-    
-    This avoids event-loop reuse issues on Windows asyncpg when running multiple pytest tests.
-    """
+    """Fixture that creates a fresh in-memory SQLite database per test."""
     test_engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -29,9 +29,19 @@ async def setup_test_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # 2. Seed starter categories
+    # 2. Seed default user 1 and starter categories
     async with test_sessionmaker() as session:
-        await seed_starter_categories(session)
+        user1 = User(
+            id=1,
+            email="testuser@example.com",
+            full_name="Test User 1",
+            hashed_password=get_password_hash("Password123!"),
+            is_active=True,
+            is_verified=True,
+        )
+        session.add(user1)
+        await session.commit()
+        await seed_user_starter_categories(session, user_id=1)
 
     # 3. Override get_db FastAPI dependency
     async def override_get_db():
@@ -45,3 +55,18 @@ async def setup_test_database():
     # Clean up
     app.dependency_overrides.clear()
     await test_engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def async_client():
+    """Async HTTP client for testing API endpoints."""
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+
+
+@pytest.fixture
+def auth_headers_user1():
+    """Generate valid JWT Authorization header for User 1."""
+    token = create_access_token(data={"sub": "1", "email": "testuser@example.com"})
+    return {"Authorization": f"Bearer {token}"}

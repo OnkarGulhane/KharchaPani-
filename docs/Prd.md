@@ -2,7 +2,7 @@
 
 ## Kharcha Pani — Personal Expense Tracker
 
-**Version:** 2.0 (Corrected — 100% aligned with SRS v2.0)
+**Version:** 3.0 (Production-Ready Authentication, Google Sign-In & Multi-User Privacy)
 
 ---
 
@@ -10,90 +10,73 @@
 
 **Product Name:** Kharcha Pani
 
-**Summary:** Kharcha Pani is a personal finance web app that lets a user log daily expenses, organize them into self-created categories, and instantly see the impact on totals, charts, and a live budget — turning scattered notes/spreadsheet habits into one simple, searchable place to track spending.
+**Summary:** Kharcha Pani is a secure personal finance web app that lets individual users sign up, log daily expenses, organize them into personal categories, track a live budget, and analyze spending patterns — with guaranteed private data isolation so that each user's financial records are strictly visible only to themselves.
 
 ### 2. Problem Statement
 
-Most people don't track their expenses properly. They either forget to log them, or rely on tools like notes apps and spreadsheets that are hard to search, filter, or understand at a glance.
+Most people don't track their expenses properly. Furthermore, users require privacy and convenience:
+- They need their financial data to be 100% private and protected from other users.
+- They want frictionless access via Email/Password or 1-click **Google Sign-In**.
+- They need simple recovery options if they forget their password.
+- They want their login session to stay active securely across devices without repeatedly entering passwords.
 
-Because of this, they can't easily answer three simple questions:
+### 3. Core Product Loop & Scope Evolution
 
-- "How much have I spent?"
-- "Where is my money going?"
-- "Am I within my budget, or over it?"
-
-Kharcha Pani solves this by giving the user one simple place to log expenses and instantly see the impact on their total spending and budget.
-
-### 3. Why Keep V1 (MVP) Small?
-
-V1 focuses only on the core loop:
-
-**Log an expense → See it reflected in totals & charts → Track budget left**
-
-Everything else (login, recurring expenses, notifications, multi-user support, bank sync, multi-currency, **data export**) is left for later phases. This keeps V1 simple to build, easy to test, and easy to actually use.
+- **V1 (Completed MVP):** Core Loop (Log expense → Visual charts → Live budget tracking with temporary access key).
+- **Phase 2 (Current Focus):** Real Production-Ready Authentication (Sign Up, Login, Google 1-Click Login, Forgot/Reset Password, Multi-Device Logout) and **Strict User Data Privacy / Isolation** (Zero access to other users' financial logs).
 
 ### 4. Goals
 
 | Goal | Why It Matters |
 |---|---|
-| Add an expense in under 30 seconds | Easy logging = user actually keeps using it |
-| Show spending visually | Helps the user understand "where money is going" without extra effort |
-| Show a live remaining budget | Turns tracking into real budgeting, not just note-taking |
-| Make old expenses easy to find | A log is useless if you can't search or filter it later |
-| Build a scalable foundation | Later phases should not require rebuilding the core |
+| 1-Click Google Sign-In & Email Sign-Up | Fast, frictionless onboarding |
+| 100% Private Financial Data Isolation | User A never sees User B's spending, budget, or categories |
+| Safe, Persistent Login Sessions | User stays logged in securely on their device without exposing sensitive tokens |
+| Add an expense in under 30 seconds | Fast daily logging keeps users consistent |
+| Visual charts & Live budget tracking | Clear insights into spending habits |
 
-**Success Metrics:**
+---
 
-- Number of expenses logged per active user per week
-- % of users who set a budget goal
-- Time taken to add a single expense (target: under 30 seconds)
-- Search/filter usage frequency
-- User retention after 30 days
+### 6. Scope (Phase 2 Current Scope)
 
-### 5. Target Audience
+**In-Scope:**
+- **User Accounts & Authentication:**
+  - Email & Password Sign-Up / Registration
+  - Email & Password Login / Sign-In
+  - 1-Click Sign in with Google (OAuth 2.0 / OpenID Connect)
+  - Secure Logout (Single Device & All Devices / Sessions)
+  - Forgot Password & Reset Password via email link
+  - Change Password from user settings
+- **User Data Isolation (Privacy Guarantee):**
+  - Complete multi-tenant privacy: User A can only see, create, edit, or delete User A's expenses, categories, and budgets.
+  - No user can access or tamper with another user's financial data.
+- **Core Financial Tracking:**
+  - Full CRUD on expenses, personalized dynamic categories, live budget status, visual charts, search/filter/sort.
 
-**Who this is for:**
+**Out-of-Scope (Deferred to Future Phases):**
+- Split expenses between multiple users / shared wallets (Phase 3)
+- Bank / SMS / UPI auto-import (Phase 4)
+- AI-based spend prediction (Phase 4)
+- Automated bill notifications (Phase 5)
 
-- One person who wants to manually track their own personal spending
-- Budget-conscious users trying to control overspending
-- Users who want visual/report-based insight into where their money goes
-
-**Not for (V1):**
-
-- Teams or families sharing one account
-- Businesses
-- Advanced investment/finance tracking
-
-### 6. Scope (V1 / MVP)
-
-**In-Scope (V1):**
-
-- Full CRUD on expenses (Add / View / Edit / Delete)
-- Categories the user creates and manages themselves (not a fixed list), including delete-with-reassignment
-- Dashboard with total spend + charts (pie/donut + bar/line)
-- Daily / Weekly / Monthly report period toggle
-- Month-over-month spend comparison with % change
-- Top categories by spend, ranked
-- Average daily/weekly spend
-- Search, filter, and sort on expenses (usable together)
-- Budget goal setting with live remaining-balance tracking + near-limit/over-budget alert indicator
-- Simple navigation (hamburger menu on mobile / sidebar on desktop: Dashboard, Expenses)
-- Field validation (positive amount, no future-dated expenses)
-- **A lightweight, temporary access gate** (single shared app key) since V1 is publicly hosted but has no full login system yet (see Section 9)
-
-**Out-of-Scope (V1) — fully deferred to later phases:**
-
-- Login / multiple user accounts (Phase 2)
-- Recurring or auto-scheduled expenses (Phase 2)
-- Multiple currencies (Phase 4)
-- Bank / UPI / SMS auto-import (Phase 4)
-- Income tracking (Phase 2)
-- Notifications / reminders (Phase 5)
-- **Report export (PDF/Excel/CSV) — moved fully to Phase 2. Not part of V1 under any condition**, to avoid scope ambiguity.
+---
 
 ### 7. Functional Requirements & User Stories
 
-#### 7.1 Navigation
+#### 7.0 User Authentication & Privacy (Phase 2)
+
+| ID | User Story | Requirement (Non-Technical) | Priority |
+|---|---|---|---|
+| FR-A1 | User Registration | As a new user, I can create an account using my name, email, and a secure password. Upon registration, common starter categories (Food, Travel, Rent, etc.) are automatically set up for me. | P0 |
+| FR-A2 | User Login | As a registered user, I can log into my account securely using my email and password. | P0 |
+| FR-A3 | 1-Click Google Sign-In | As a user, I can sign in or sign up with one click using my Google account. | P0 |
+| FR-A4 | Secure Session Persistence | As a user, I remain logged in securely so I don't have to re-enter my credentials every few minutes. | P0 |
+| FR-A5 | Complete Data Privacy | As a user, all my expenses, custom categories, budgets, and dashboard statistics are 100% private to my account. No other user can view or modify my data. | P0 |
+| FR-A6 | Logout (Current / All Devices) | As a user, I can log out of my current device or choose "Log out from all devices" if I lose a device. | P0 |
+| FR-A7 | Forgot & Reset Password | As a user, if I forget my password, I can request a secure reset link via email to create a new password. | P1 |
+| FR-A8 | Change Password | As an active user, I can update my password by providing my current password and choosing a new one. | P1 |
+
+---
 
 **FR-1 — Hamburger menu (mobile) / Sidebar (desktop)**
 

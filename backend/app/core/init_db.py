@@ -1,22 +1,22 @@
 import asyncio
+from sqlalchemy import select
 from app.core.config import settings
 from app.core.database import engine, AsyncSessionLocal
-from app.models import Base
-from app.seed.seed_categories import seed_starter_categories
+from app.models import Base, User
+from app.core.security import get_password_hash
+from app.seed.seed_categories import seed_user_starter_categories
 
 
 async def ensure_postgres_database_exists() -> None:
     """If using PostgreSQL and the target DB doesn't exist, create it automatically."""
     db_url = settings.DATABASE_URL
     if "postgresql" in db_url:
-        import asyncpg
-
         try:
-            # Parse connection details
+            import asyncpg
             url_without_scheme = db_url.split("://", 1)[1]
             params_part = url_without_scheme.split("?")[0]
             conn_credentials, db_name = params_part.split("/")
-            
+
             user_pass, host_port = conn_credentials.split("@")
             user_parts = user_pass.split(":")
             user = user_parts[0]
@@ -34,19 +34,35 @@ async def ensure_postgres_database_exists() -> None:
                     print(f"PostgreSQL database '{db_name}' created successfully.")
                 await conn.close()
         except Exception as e:
-            # If error during DB check, print warning and let engine attempt connection
             print(f"PostgreSQL connection/DB check status: {e}")
 
 
 async def init_db() -> None:
-    """Initialize database tables and seed starter categories."""
+    """Initialize database tables, default user, and seed starter categories."""
     await ensure_postgres_database_exists()
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        
+
     async with AsyncSessionLocal() as session:
-        await seed_starter_categories(session)
+        # Check if default user 1 exists
+        stmt = select(User).where(User.id == 1)
+        res = await session.execute(stmt)
+        default_user = res.scalar_one_or_none()
+
+        if not default_user:
+            default_user = User(
+                id=1,
+                email="admin@kharchapani.local",
+                full_name="Default User",
+                hashed_password=get_password_hash("KharchaPani@2026"),
+                is_active=True,
+                is_verified=True,
+            )
+            session.add(default_user)
+            await session.commit()
+
+        await seed_user_starter_categories(session, user_id=1)
         print("Database initialized successfully and starter categories seeded.")
 
 

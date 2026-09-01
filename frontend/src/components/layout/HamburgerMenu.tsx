@@ -3,27 +3,22 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LayoutDashboard, Receipt, KeyRound, Wallet, LogOut, Download, Sparkles } from "lucide-react";
-import { removeAppKey } from "@/lib/api/client";
+import { Menu, X, LayoutDashboard, Receipt, Wallet, LogOut, Download, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CurrencySelector from "@/components/common/CurrencySelector";
 import { usePWA } from "@/hooks/usePWA";
+import { useAuth } from "@/context/AuthContext";
 
 export default function HamburgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const { isInstalled, promptInstall } = usePWA();
+  const { user, logout, logoutAll } = useAuth();
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Expenses & Categories", href: "/expenses", icon: Receipt },
-    { name: "Access Key", href: "/access", icon: KeyRound },
   ];
-
-  const handleLogout = () => {
-    removeAppKey();
-    window.location.href = "/access";
-  };
 
   return (
     <div className="md:hidden">
@@ -37,7 +32,6 @@ export default function HamburgerMenu() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-          {/* Quick Install Pill Badge in Top Bar */}
           {!isInstalled && (
             <button
               onClick={() => promptInstall()}
@@ -80,7 +74,7 @@ export default function HamburgerMenu() {
               className="fixed top-0 left-0 bottom-0 w-72 max-w-[85vw] max-h-[100dvh] overflow-y-auto bg-surface border-r border-gray-800 z-50 p-5 flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between pb-6 mb-6 border-b border-gray-800">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center">
                       <Wallet className="w-5 h-5 text-white" />
@@ -97,6 +91,19 @@ export default function HamburgerMenu() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
+
+                {/* User Info in Mobile Drawer */}
+                {user && (
+                  <div className="mb-4 p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xs">
+                      {user.full_name?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-4">
                   <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
@@ -141,13 +148,27 @@ export default function HamburgerMenu() {
                 </nav>
               </div>
 
-              <div className="pt-4 border-t border-gray-800">
+              <div className="pt-4 border-t border-gray-800 space-y-1.5">
                 <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  onClick={() => {
+                    setIsOpen(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-300 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Reset Access Key</span>
+                  <span>Sign Out</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    logoutAll();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-xs text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Sign Out All Devices</span>
                 </button>
               </div>
             </motion.div>

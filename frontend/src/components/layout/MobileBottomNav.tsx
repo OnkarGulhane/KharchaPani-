@@ -3,13 +3,15 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, KeyRound, Plus, Download } from "lucide-react";
+import { LayoutDashboard, Receipt, Plus, Download, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePWA } from "@/hooks/usePWA";
+import { useAuth } from "@/context/AuthContext";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { isInstalled, isInstallable, promptInstall } = usePWA();
+  const { isInstalled, promptInstall } = usePWA();
+  const { logout } = useAuth();
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -22,7 +24,7 @@ export default function MobileBottomNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 bg-surface/90 backdrop-blur-xl border-t border-gray-800/80 shadow-2xl"
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
-        {/* Dashboard Link */}
+        {/* Dashboard & Expenses Links */}
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -59,25 +61,17 @@ export default function MobileBottomNav() {
           <span className="text-[10px] font-medium text-emerald-400 mt-0.5">Quick Add</span>
         </Link>
 
-        {/* Access Key */}
-        <Link
-          href="/access"
-          className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 ${
-            pathname === "/access" ? "text-emerald-400 font-semibold" : "text-gray-400 hover:text-gray-200"
-          }`}
+        {/* Sign Out Button */}
+        <button
+          onClick={() => logout()}
+          className="relative flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-gray-400 hover:text-rose-400 transition-colors"
+          title="Sign Out"
         >
-          {pathname === "/access" && (
-            <motion.div
-              layoutId="activeMobileTab"
-              className="absolute inset-0 bg-emerald-500/10 rounded-xl border border-emerald-500/20"
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            />
-          )}
-          <KeyRound className="w-5 h-5 mb-0.5 relative z-10" />
-          <span className="text-[11px] relative z-10">Access</span>
-        </Link>
+          <LogOut className="w-5 h-5 mb-0.5 relative z-10" />
+          <span className="text-[11px] relative z-10">Sign Out</span>
+        </button>
 
-        {/* Install Button (Only if not already installed as standalone app) */}
+        {/* Install Button (Only if not already installed) */}
         {!isInstalled && (
           <button
             onClick={() => promptInstall()}

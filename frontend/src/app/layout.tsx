@@ -3,9 +3,9 @@ import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
 import { PWAProvider } from "@/components/providers/PWAProvider";
-import Sidebar from "@/components/layout/Sidebar";
-import HamburgerMenu from "@/components/layout/HamburgerMenu";
-import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import { GoogleProvider } from "@/components/providers/GoogleProvider";
+import { AuthProvider } from "@/context/AuthContext";
+import { AppLayout } from "@/components/layout/AppLayout";
 import PWAInstallBanner from "@/components/common/PWAInstallBanner";
 import PWAInstallModal from "@/components/common/PWAInstallModal";
 import PWAUpdateBanner from "@/components/common/PWAUpdateBanner";
@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Kharcha Pani — Personal Expense Tracker",
-  description: "Dynamic expense tracking, category analytics, and budget monitoring.",
+  description: "Secure multi-user expense tracking, category analytics, and budget monitoring.",
   manifest: "/manifest.json",
   applicationName: "Kharcha Pani",
   appleWebApp: {
@@ -59,21 +59,16 @@ export default function RootLayout({
         <PWAProvider>
           <QueryProvider>
             <CurrencyProvider>
-              <OfflineIndicator />
-              <div className="flex flex-col md:flex-row min-h-screen">
-                <Sidebar />
-                <div className="flex-1 flex flex-col min-w-0">
-                  <HamburgerMenu />
-                  <main className="flex-1 p-3.5 sm:p-6 md:p-8 pb-28 sm:pb-28 md:pb-8 max-w-7xl w-full mx-auto safe-top min-w-0">
-                    {children}
-                  </main>
-                </div>
-              </div>
-              <MobileBottomNav />
-              <PWAInstallBanner />
-              <PWAInstallModal />
-              <PWAUpdateBanner />
-              <Toaster theme="dark" position="top-right" richColors />
+              <GoogleProvider>
+                <AuthProvider>
+                  <OfflineIndicator />
+                  <AppLayout>{children}</AppLayout>
+                  <PWAInstallBanner />
+                  <PWAInstallModal />
+                  <PWAUpdateBanner />
+                  <Toaster theme="dark" position="top-right" richColors />
+                </AuthProvider>
+              </GoogleProvider>
             </CurrencyProvider>
           </QueryProvider>
         </PWAProvider>

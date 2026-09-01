@@ -2,7 +2,7 @@
 
 ## Kharcha Pani — Personal Expense Tracker
 
-**Version:** 2.0 (Corrected — 100% aligned with PRD v2.0)
+**Version:** 3.0 (Production-Ready Authentication, OAuth 2.0 & Multi-User Data Isolation)  
 **Date:** August 2026
 
 ---
@@ -11,489 +11,479 @@
 
 ### 1.1 Purpose
 
-This SRS translates the Kharcha Pani PRD v2.0 into a concrete technical blueprint — tech stack, architecture, folder structures, environment configuration, API contract, UI/UX standards, and deployment strategy — so that development can proceed without ambiguity.
+This SRS serves as the authoritative technical blueprint for **Kharcha Pani** — defining the technical architecture, security protocols, database schemas, cryptographic standards, API contracts, frontend state management, and multi-tenant data isolation rules required to support multi-user operations with enterprise-grade security.
 
 ### 1.2 Scope
 
-Kharcha Pani is a single-user personal expense tracking web application (V1/MVP) that allows a user to log expenses, manage self-created categories, view spending through a dashboard with charts and comparisons, and track a live budget goal. Login, multi-user support, recurring expenses, bank sync, and **data export** are explicitly out of scope for V1 (see PRD v2.0 Section 6).
+Kharcha Pani is a full-stack personal finance application featuring:
+- Secure User Authentication (Email/Password & Google OAuth 2.0 / OpenID Connect).
+- JWT Authentication with Refresh Token Rotation in `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
+- Server-side session tracking with single-session and all-session revocation.
+- Strict Multi-Tenant User Data Isolation (Zero RBAC, owner-exclusive authorization on all resources).
+- Full Expense CRUD, Category Management with safe deletion workflows, Budget goal tracking, and Real-time Visual Analytics.
 
-### 1.3 Guiding Principle
+### 1.3 Core Technical Principles
 
-**No hardcoded or dummy data at any stage.** All data (expenses, categories, budgets, reports) is dynamically created, stored, and fetched from the real data layer — including during development. Only default starter categories may be seeded (see Section 8.3).
+1. **Zero-Trust Client Authorization**: The client/frontend is NEVER trusted for user identification (`user_id`). The authenticated user context is derived strictly from validated backend JWT claims.
+2. **Cryptographic Protection of Credentials**: Passwords are never stored in plaintext (BCrypt/Argon2 with work factor ≥12). Refresh tokens are stored strictly as SHA-256 hashes.
+3. **No Hardcoded Data**: Zero dummy or mock data. All financial metrics and reports are computed dynamically from PostgreSQL using SQLAlchemy 2.0 async engine.
+4. **Non-Breaking Extensibility**: Database constraints and migrations (Alembic) maintain clean schema versioning with foreign keys and composite unique constraints.
 
 ---
 
 ## 2. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js (App Router) + TypeScript + Tailwind CSS |
-| Backend | FastAPI (Python, async) |
-| Database | PostgreSQL (hosted on Supabase) |
-| ORM | SQLAlchemy 2.0 (async) |
-| Migrations | Alembic |
-| Form Handling | react-hook-form + zod |
-| Data Fetching | TanStack React Query |
-| Charts | Recharts |
-| Animation | Framer Motion |
-| 3D (optional, limited use) | @react-three/fiber + @react-three/drei |
-| Hosting — Frontend | Vercel |
-| Hosting — Backend | Render (Docker-based) |
-| Hosting — Database | Supabase (managed Postgres) |
+| Layer | Technology | Specification / Version |
+|---|---|---|
+| Frontend Framework | Next.js (App Router) | Next.js 14, React 18, TypeScript 5+ |
+| Styling & UI | Tailwind CSS + Framer Motion | Tailwind v3.4+, Framer Motion v11+ |
+| Client State & Forms | TanStack React Query + React Hook Form | TanStack Query v5+, Zod v3.23+ |
+| Data Visualization | Recharts | Recharts v2.12+ (2D charts authoritative) |
+| Backend Framework | FastAPI | FastAPI 0.110+, Python 3.11+, Uvicorn (ASGI) |
+| Database Engine | PostgreSQL | PostgreSQL 15+ (Hosted on Supabase) |
+| ORM & Migrations | SQLAlchemy 2.0 Async + Alembic | SQLAlchemy 2.0 (Asyncpg driver) |
+| Authentication & Security | PyJWT + Passlib / BCrypt + Google Auth | PyJWT 2.8+, Passlib 1.7.4 (BCrypt), `google-auth` |
+| Rate Limiting & Protection | SlowAPI | SlowAPI (In-memory / Redis compatible) |
+| Production Hosting | Vercel (Frontend) + Render (Backend) | Dockerized backend with Gunicorn/Uvicorn workers |
 
 ---
 
 ## 3. System Architecture
 
 ```
-┌─────────────────┐        REST API (HTTPS)        ┌──────────────────┐        ┌─────────────────┐
-│   Next.js App     │ ─────────────────────────────> │   FastAPI Backend  │ ─────> │  Supabase (Postgres) │
-│   (Vercel)         │ <───────────────────────────── │   (Render, Docker)  │ <───── │                     │
-└─────────────────┘        JSON (envelope format)    └──────────────────┘        └─────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                           NEXT.JS 14 FRONTEND                                            │
+│  ┌─────────────────────────┐  ┌───────────────────────────┐  ┌────────────────────────────────────────┐  │
+│  │   AuthContext / State   │  │   apiFetch Interceptor    │  │       UI Components & Dashboards       │  │
+│  │ (Memory Access Token)   │  │  (Auto 401 Silent Refresh)│  │   (Recharts, Modals, Forms, PWA)       │  │
+│  └─────────────────────────┘  └───────────────────────────┘  └────────────────────────────────────────┘  │
+└───────────────────────────────────────────────┬──────────────────────────────────────────────────────────┘
+                                                │ HTTPS (Bearer Access Token / HttpOnly Cookie)
+                                                ▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         FASTAPI BACKEND RUNTIME                                          │
+│  ┌────────────────────────┐  ┌────────────────────────────┐  ┌────────────────────────────────────────┐  │
+│  │  Security Middleware   │  │    FastAPI Dependencies    │  │           Router Endpoints             │  │
+│  │ (CORS, CSRF, RateLimit)│  │   (get_current_active_user)│  │  (/auth, /expenses, /categories, etc.)  │  │
+│  └────────────────────────┘  └────────────────────────────┘  └────────────────────────────────────────┘  │
+│                                               │                                                          │
+│  ┌────────────────────────────────────────────┴───────────────────────────────────────────────────────┐  │
+│  │                                     SERVICE LAYER (Multi-Tenant Logic)                             │  │
+│  │     (AuthService, GoogleAuthService, ExpenseService, CategoryService, BudgetService, Dashboard)    │  │
+│  └────────────────────────────────────────────┬───────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────┼──────────────────────────────────────────────────────────┘
+                                                │ SQLAlchemy 2.0 Asyncpg
+                                                ▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     POSTGRESQL DATABASE (SUPABASE)                                       │
+│  ┌──────────────┐   ┌───────────────────┐   ┌──────────────────────┐   ┌──────────────┐   ┌────────────┐ │
+│  │    users     │──<│   refresh_tokens  │   │ password_reset_tokens│   │  categories  │──<│  expenses  │ │
+│  └──────────────┘   └───────────────────┘   └──────────────────────┘   └──────────────┘   └────────────┘ │
+│         │                                                                     │                  │       │
+│         └──────────────────────────────(Foreign Key user_id)──────────────────┴──────────────────┘       │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
-
-- Frontend never talks to Supabase directly — all data flows through the FastAPI backend.
-- Backend uses a **pooled connection (port 6543)** for runtime queries and a **direct connection (port 5432)** for Alembic migrations.
-- All environments (dev/staging/prod) are environment-variable driven — no hardcoded URLs, ports, or secrets anywhere in code.
-- Since V1 is publicly hosted with no full auth layer, **every request (except `/health`) must include a shared-access key header**, validated by backend middleware (see Section 6.5).
 
 ---
 
-## 4. Backend — Folder Structure
+## 4. Backend Architecture & Folder Structure
 
 ```
 backend/
 ├── app/
-│   ├── main.py                    # FastAPI entrypoint, CORS, router registration, access-key middleware
+│   ├── main.py                         # FastAPI app instance, CORS middleware, global exception handlers
 │   ├── core/
-│   │   ├── config.py               # pydantic-settings — all env vars
-│   │   ├── database.py             # async engine + session
-│   │   └── security.py             # V1: shared-access-key middleware; Phase 2: replaced with real auth
-│   ├── models/                     # SQLAlchemy models
-│   │   ├── expense.py
-│   │   ├── category.py
-│   │   └── budget.py
-│   ├── schemas/                    # Pydantic request/response schemas
-│   │   ├── expense.py
-│   │   ├── category.py
-│   │   ├── budget.py
-│   │   ├── dashboard.py            # MoM comparison, top categories, average spend schemas
-│   │   └── response.py             # SuccessResponse / ErrorResponse / PaginatedResponse
-│   ├── routers/
-│   │   ├── expenses.py
-│   │   ├── categories.py           # includes DELETE with ?reassign_to= support
-│   │   ├── budget.py
-│   │   ├── dashboard.py            # includes ?period= day|week|month
-│   │   └── health.py               # /health, /health/db — NOT gated by access key
-│   ├── services/                   # business logic layer
-│   │   ├── expense_service.py
-│   │   ├── category_service.py     # handles unused/reassign/cascade delete logic
-│   │   ├── budget_service.py
-│   │   └── dashboard_service.py    # totals, charts, MoM comparison, top categories, avg spend
+│   │   ├── config.py                   # Pydantic Settings (env vars validated on startup)
+│   │   ├── database.py                 # Async SQLAlchemy engine, session maker, get_db dependency
+│   │   ├── security.py                 # Password hashing (BCrypt), JWT encoding/decoding, token hashing
+│   │   └── dependencies.py             # get_current_user, get_current_active_user dependencies
+│   ├── models/                         # SQLAlchemy 2.0 Declarative Mapped Models
+│   │   ├── base.py                     # Declarative Base
+│   │   ├── user.py                     # User account model
+│   │   ├── refresh_token.py            # RefreshToken session model (hashed tokens)
+│   │   ├── password_reset.py           # PasswordResetToken model
+│   │   ├── category.py                 # Category model (composite unique name+user_id)
+│   │   ├── expense.py                  # Expense model (user_id FK)
+│   │   └── budget.py                   # Budget model (user_id FK)
+│   ├── schemas/                        # Pydantic v2 Request/Response Schemas
+│   │   ├── auth.py                     # Login, Register, GoogleAuth, TokenResponse, PasswordReset schemas
+│   │   ├── user.py                     # UserResponse, UserUpdate schemas
+│   │   ├── category.py                 # CategoryCreate, CategoryUpdate, CategoryResponse
+│   │   ├── expense.py                  # ExpenseCreate, ExpenseUpdate, ExpenseResponse
+│   │   ├── budget.py                   # BudgetCreate, BudgetStatusResponse
+│   │   ├── dashboard.py                # Summary, Charts, MoM, TopCategories, AverageSpend schemas
+│   │   └── response.py                 # Generic APIResponse[T], PaginatedData[T]
+│   ├── routers/                        # API Controllers
+│   │   ├── auth.py                     # /api/v1/auth endpoints
+│   │   ├── expenses.py                 # /api/v1/expenses endpoints
+│   │   ├── categories.py               # /api/v1/categories endpoints (with reassign/cascade)
+│   │   ├── budget.py                   # /api/v1/budget endpoints
+│   │   ├── dashboard.py                # /api/v1/dashboard analytics endpoints
+│   │   └── health.py                   # /health, /health/db endpoints (unprotected)
+│   ├── services/                       # Isolated Domain Business Logic
+│   │   ├── auth_service.py             # User registration, password verification, token lifecycle
+│   │   ├── google_auth_service.py      # Google OAuth token verification and account linking
+│   │   ├── expense_service.py          # User-isolated expense CRUD, pagination, filtering
+│   │   ├── category_service.py         # User-isolated category CRUD & reassign/cascade deletion
+│   │   ├── budget_service.py           # User-isolated budget tracking and calculation
+│   │   └── dashboard_service.py        # User-isolated analytics aggregation and trends
 │   ├── seed/
-│   │   └── seed_categories.py      # default categories ONLY — no demo expenses
+│   │   └── seed_categories.py          # Helper to seed default starter categories per user
 │   └── utils/
-│       └── validators.py
+│       └── validators.py               # Input validation helpers
 ├── alembic/
-│   ├── versions/
-│   └── env.py
+│   ├── versions/                       # Database migration scripts
+│   └── env.py                          # Async Alembic runner
 ├── tests/
-│   ├── test_expenses.py
-│   ├── test_categories.py          # includes reassign/cascade delete test cases
-│   ├── test_budget.py
-│   └── test_dashboard.py           # totals, period toggle, MoM, top categories, avg spend
+│   ├── conftest.py                     # Test DB fixtures, mock tokens, authenticated clients
+│   ├── test_auth.py                    # Registration, login, refresh rotation, revocation tests
+│   ├── test_isolation.py               # Multi-user data leak prevention tests
+│   ├── test_expenses.py                # Expense CRUD with user isolation
+│   ├── test_categories.py              # Category CRUD with composite unique and safe deletion
+│   ├── test_budget.py                  # Budget calculations per user
+│   └── test_dashboard.py               # Analytics data isolation tests
 ├── Dockerfile
-├── .dockerignore
-├── .gitignore
-├── .env.example
-├── .env                             # gitignored
-├── alembic.ini
 ├── requirements.txt
-└── pytest.ini
+└── alembic.ini
 ```
 
 ---
 
-## 5. Frontend — Folder Structure
+## 5. Frontend Architecture & Folder Structure
 
 ```
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx                 # Dashboard (default route)
+│   │   ├── layout.tsx                  # Root layout with QueryProvider, AuthProvider, PWAProvider
+│   │   ├── page.tsx                    # Protected Dashboard view
+│   │   ├── login/
+│   │   │   └── page.tsx                # Glassmorphic Login with Email/Password & Google Sign-In
+│   │   ├── register/
+│   │   │   └── page.tsx                # User Registration page with live validation
+│   │   ├── forgot-password/
+│   │   │   └── page.tsx                # Password recovery request page
+│   │   ├── reset-password/
+│   │   │   └── page.tsx                # Password reset execution page (token-based)
+│   │   ├── expenses/
+│   │   │   └── page.tsx                # Protected Expense Management view
 │   │   ├── loading.tsx
 │   │   ├── error.tsx
 │   │   ├── not-found.tsx
-│   │   ├── access/
-│   │   │   └── page.tsx             # V1 shared-access-key entry screen
-│   │   ├── expenses/
-│   │   │   └── page.tsx             # Expenses + Category management (modal)
 │   │   └── globals.css
-│   │
+│   ├── context/
+│   │   └── AuthContext.tsx             # React Context for user profile, tokens, login/logout actions
 │   ├── components/
-│   │   ├── ui/                      # Button, Input, Modal, Toast, Skeleton (primitives)
-│   │   ├── common/
-│   │   │   ├── ConfirmDialog.tsx
-│   │   │   ├── EmptyState.tsx
-│   │   │   └── LoadingSkeleton.tsx
-│   │   ├── providers/
-│   │   │   └── QueryProvider.tsx
-│   │   ├── expenses/
-│   │   │   ├── ExpenseForm.tsx
-│   │   │   ├── ExpenseList.tsx
-│   │   │   ├── ExpenseCard.tsx
-│   │   │   ├── ExpenseFilters.tsx
-│   │   │   ├── ExpenseSearch.tsx
-│   │   │   └── ExpenseDeleteDialog.tsx
-│   │   ├── categories/
-│   │   │   ├── CategoryList.tsx     # shows per-category expense count
-│   │   │   ├── CategoryForm.tsx
-│   │   │   ├── CategoryDeleteDialog.tsx  # reassign-or-cascade warning UI
-│   │   │   └── CategoryManager.tsx
-│   │   ├── dashboard/
-│   │   │   ├── SummaryCards.tsx
-│   │   │   ├── CategoryPieChart.tsx
-│   │   │   ├── SpendTrendChart.tsx
-│   │   │   ├── RecentExpenses.tsx
-│   │   │   ├── BudgetStatus.tsx
-│   │   │   ├── ReportPeriodSelector.tsx   # day/week/month toggle, drives all cards below
-│   │   │   ├── MonthComparisonCard.tsx    # FR-23: MoM % change
-│   │   │   ├── TopCategoriesList.tsx      # FR-24: ranked top categories
-│   │   │   └── AverageSpendCard.tsx       # FR-25: avg daily/weekly spend
-│   │   ├── budget/
-│   │   │   ├── BudgetForm.tsx
-│   │   │   └── BudgetProgress.tsx
-│   │   ├── layout/
-│   │   │   ├── Sidebar.tsx          # desktop nav
-│   │   │   └── HamburgerMenu.tsx    # mobile nav
-│   │   └── 3d/
-│   │       └── EmptyStateScene.tsx  # optional, lazy-loaded, mobile fallback required
-│   │
+│   │   ├── auth/
+│   │   │   ├── AuthCard.tsx            # Premium glassmorphic container for auth screens
+│   │   │   ├── GoogleSignInButton.tsx  # Google OAuth 2.0 button integration
+│   │   │   ├── LoginForm.tsx           # React Hook Form + Zod login form
+│   │   │   └── RegisterForm.tsx        # React Hook Form + Zod registration form
+│   │   ├── ui/                         # Base design system primitives (Button, Input, Modal, Badge)
+│   │   ├── layout/                     # Sidebar, MobileBottomNav, HamburgerMenu, Header
+│   │   ├── dashboard/                  # Metric cards, Recharts components, PeriodSelector
+│   │   ├── expenses/                   # ExpenseList, ExpenseForm, ExpenseFilters, DeleteDialog
+│   │   └── categories/                 # CategoryManager, CategoryForm, CategoryDeleteDialog
 │   ├── lib/
 │   │   ├── api/
-│   │   │   ├── client.ts            # attaches shared-access-key header to every request
-│   │   │   ├── expenses.ts
-│   │   │   ├── categories.ts
-│   │   │   ├── budget.ts
-│   │   │   ├── dashboard.ts
-│   │   │   └── health.ts
+│   │   │   ├── client.ts               # Fetch client with Bearer auth & auto 401 Silent Refresh
+│   │   │   ├── auth.ts                 # Auth API methods
+│   │   │   ├── expenses.ts             # Expense API methods
+│   │   │   ├── categories.ts           # Category API methods
+│   │   │   ├── budget.ts               # Budget API methods
+│   │   │   └── dashboard.ts            # Dashboard API methods
 │   │   ├── validations/
+│   │   │   ├── authSchema.ts           # Zod schemas for login, register, forgot-password
 │   │   │   ├── expenseSchema.ts
-│   │   │   ├── categorySchema.ts
-│   │   │   └── budgetSchema.ts
-│   │   ├── animations/
-│   │   │   └── variants.ts
-│   │   ├── constants.ts
+│   │   │   └── categorySchema.ts
 │   │   └── utils.ts
-│   │
 │   ├── hooks/
-│   │   ├── useExpenses.ts
-│   │   ├── useCategories.ts
-│   │   ├── useBudget.ts
-│   │   ├── useDashboard.ts
-│   │   └── useMediaQuery.ts
-│   │
-│   ├── types/
-│   │   ├── expense.ts
-│   │   ├── category.ts
-│   │   ├── budget.ts
-│   │   ├── dashboard.ts
-│   │   └── api.ts
-│   │
-│   └── config/
-│       └── env.ts
-│
-├── public/
-├── tests/
-│   ├── dashboard.test.tsx           # ReportPeriodSelector, MoM, top categories, avg spend
-│   ├── expenses.test.tsx
-│   └── categories.test.tsx          # reassign/cascade flow
-├── Dockerfile
-├── .dockerignore
-├── .gitignore
-├── .env.local.example
-├── .env.local                       # gitignored
-├── .eslintrc.json
-├── postcss.config.js
-├── next.config.js
-├── tailwind.config.ts
-├── tsconfig.json
-└── package.json
+│   │   ├── useAuth.ts                  # Convenience hook for AuthContext
+│   │   ├── useExpenses.ts              # TanStack queries for expenses
+│   │   ├── useCategories.ts            # TanStack queries for categories
+│   │   ├── useBudget.ts                # TanStack queries for budget
+│   │   └── useDashboard.ts             # TanStack queries for analytics
+│   └── types/
+│       ├── auth.ts                     # User, Token, Session interfaces
+│       ├── api.ts                      # Envelope response types
+│       ├── expense.ts
+│       └── category.ts
 ```
 
 ---
 
-## 6. Environment Configuration
+## 6. Security, Authentication & Cryptography Specification
 
-### 6.1 Principle
+### 6.1 Password Security & Hashing
+- **Algorithm**: BCrypt (`passlib.context.CryptContext(schemes=["bcrypt"], deprecated="auto")`).
+- **Cost Factor**: 12 rounds minimum.
+- **Constraints**: Minimum 8 characters, at least 1 uppercase letter, 1 number, and 1 special character.
+- **Leak Prevention**: Password hashes are never returned in schemas, logs, or API responses.
 
-No literal URL, port, secret, or credential appears anywhere in source code. All configuration is read from environment variables via `pydantic-settings` (backend) and `process.env` (frontend), validated at startup.
+### 6.2 JWT Access Token
+- **Format**: JSON Web Token (JWT), signed with HMAC-SHA256 (`HS256`).
+- **Lifespan**: 15 minutes (`ACCESS_TOKEN_EXPIRE_MINUTES=15`).
+- **Payload Claims**:
+  ```json
+  {
+    "sub": "user_id_integer_as_string",
+    "email": "user@example.com",
+    "iat": 1725100000,
+    "exp": 1725100900,
+    "type": "access"
+  }
+  ```
+- **Transmission**: Sent by frontend via `Authorization: Bearer <access_token>` header.
 
-### 6.2 backend/.env.example
+### 6.3 Refresh Token & Cookie Architecture
+- **Format**: Cryptographically strong random 64-character URL-safe string (`secrets.token_urlsafe(48)`).
+- **Lifespan**: 30 days (`REFRESH_TOKEN_EXPIRE_DAYS=30`).
+- **Database Storage**: Only the **SHA-256 hash** (`hashlib.sha256(token.encode()).hexdigest()`) is stored in `refresh_tokens.token_hash`. Plaintext tokens are NEVER stored in the database.
+- **Cookie Security Flags**:
+  - `HttpOnly = True` (inaccessible to browser JavaScript/XSS).
+  - `Secure = True` (transmitted only over HTTPS in staging/production).
+  - `SameSite = "Lax"` (mitigates CSRF while enabling top-level navigation).
+  - `Path = "/api/v1/auth"` (restricted strictly to auth refresh/logout endpoints).
+  - `Max-Age = 2592000` (30 days in seconds).
 
-```env
-# App
-APP_ENV=development
-DEBUG=true
+### 6.4 Refresh Token Rotation & Revocation
+- **Automatic Rotation**: When `/api/v1/auth/refresh` is called:
+  1. The incoming cookie token is hashed and verified against `refresh_tokens`.
+  2. If expired or `is_revoked == True`, the request is rejected with `401 Unauthorized`.
+  3. The used token is immediately marked `is_revoked = True` (`revoked_at = NOW()`).
+  4. A brand-new refresh token is generated, hashed, saved, and issued in a fresh `Set-Cookie` header along with a new Access Token.
+- **Session Revocation (`/auth/logout`)**: The specific refresh token is revoked in DB and the cookie is expired (`Max-Age=0`).
+- **Multi-Device Revocation (`/auth/logout-all`)**: All active refresh tokens belonging to `current_user.id` are marked `is_revoked = True`.
 
-# Database (Supabase)
-DATABASE_URL=postgresql+asyncpg://postgres:[PASSWORD]@db.xxxxx.supabase.co:5432/postgres?sslmode=require
-DATABASE_URL_POOLED=postgresql+asyncpg://postgres:[PASSWORD]@db.xxxxx.supabase.co:6543/postgres?sslmode=require
+### 6.5 Google OAuth 2.0 / OpenID Connect
+- **Flow**:
+  1. Frontend uses Google Identity Services to obtain a signed Google ID Token (`id_token`).
+  2. Frontend sends `POST /api/v1/auth/google` with `{ "id_token": "..." }`.
+  3. Backend verifies the token signature using `google.oauth2.id_token.verify_oauth2_token(id_token, requests.Request(), GOOGLE_CLIENT_ID)`.
+  4. Backend verifies audience (`aud == GOOGLE_CLIENT_ID`) and issuer (`iss in ["accounts.google.com", "https://accounts.google.com"]`).
+  5. User is retrieved by verified email or created with `google_id`. If newly created, default starter categories are seeded.
+  6. Backend issues standard application Access Token + HttpOnly Refresh Token.
 
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,https://kharcha-pani.vercel.app
+### 6.6 Strict Multi-Tenant Data Isolation (Zero RBAC)
+- There are no admin roles or bypass mechanisms.
+- Every API endpoint derives identity from `get_current_active_user` dependency.
+- **All SQL Queries** strictly append `where(Model.user_id == current_user.id)`:
+  - `SELECT * FROM expenses WHERE id = :id AND user_id = :current_user_id`
+  - `UPDATE expenses SET ... WHERE id = :id AND user_id = :current_user_id`
+  - `DELETE FROM expenses WHERE id = :id AND user_id = :current_user_id`
+- If an entity exists but belongs to another user, the API responds with **`404 Not Found`** (preventing user enumeration and ID manipulation attacks).
 
-# API
-API_V1_PREFIX=/api/v1
-
-# V1 shared-access gate (temporary, replaces real auth until Phase 2)
-APP_ACCESS_KEY=change-me-to-a-long-random-value
-
-# Render injects PORT automatically — do not hardcode
-PORT=8000
-```
-
-### 6.3 frontend/.env.local.example
-
-```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
-NEXT_PUBLIC_APP_ENV=development
-```
-
-### 6.4 Rules
-
-| Rule | Reason |
-|---|---|
-| `.env` / `.env.local` are git-ignored | Secrets must never be committed |
-| `.env.example` / `.env.local.example` are committed | Onboarding clarity for new developers |
-| Missing required var → app fails to start | Silent misconfiguration is worse than a crash |
-| Production secrets set only in Render/Vercel dashboards | `sync: false` in `render.yaml`, Vercel env UI for frontend |
-
-### 6.5 Temporary Access Control (V1 Public Deployment)
-
-Because V1 is deployed publicly (Vercel + Render + Supabase) but has **no login system**, the backend enforces a lightweight gate so the app isn't fully open to the internet:
-
-- Every route except `/health` and `/health/db` requires header `X-App-Key: <APP_ACCESS_KEY>`.
-- A FastAPI middleware in `core/security.py` checks this header against `APP_ACCESS_KEY` before the request reaches any router; mismatched/missing key → `401 Unauthorized`.
-- The frontend prompts once for this key on first visit (`/access` page), stores it in memory/cookie for the session, and the API client attaches it to every request automatically.
-- **This is explicitly a stop-gap, not real authentication.** It is fully replaced by proper login/session auth in Phase 2 (PRD Section 13).
+### 6.7 CORS & Rate Limiting
+- **CORS Configuration**: `CORSMiddleware` configured with `allow_credentials=True` and strict origin matching (`ALLOWED_ORIGINS`). Wildcard `*` with credentials is explicitly prohibited.
+- **Rate Limiting**:
+  - `POST /api/v1/auth/login`: 5 requests / minute per IP.
+  - `POST /api/v1/auth/register`: 3 requests / minute per IP.
+  - `POST /api/v1/auth/forgot-password`: 3 requests / minute per IP.
 
 ---
 
 ## 7. API Contract Standards
 
-### 7.1 Versioning
-
-All routes are prefixed `/api/v1/...` to allow non-breaking evolution in later phases.
-
-### 7.2 Response Envelope
-
+All endpoints follow the standard envelope format:
 ```json
-// Success
-{ "success": true, "data": { ... }, "message": null }
-
-// Error
-{ "success": false, "error": "Validation failed", "detail": "Amount must be positive" }
-```
-
-### 7.3 Pagination Contract
-
-Paginated endpoints return the pagination object **nested inside `data`** — never as a top-level shape on its own:
-
-```json
+// Success Envelope
 {
   "success": true,
-  "data": {
-    "items": [ ... ],
-    "total": 124,
-    "page": 1,
-    "page_size": 20,
-    "has_next": true
-  },
-  "message": null
+  "data": { ... },
+  "message": "Operation successful"
+}
+
+// Error Envelope
+{
+  "success": false,
+  "error": "Error description",
+  "detail": "Granular validation or reason details"
 }
 ```
 
-Query pattern: `GET /api/v1/expenses?page=1&page_size=20&sort_by=date&order=desc&category=Food`
+### 7.1 Authentication Endpoints (`/api/v1/auth`)
 
-### 7.4 Dashboard Endpoints
+| Endpoint | Method | Auth Required | Request Body | Response `data` | Description |
+|---|---|---|---|---|---|
+| `/register` | `POST` | None | `{ email, password, full_name }` | `{ user, access_token }` + Set Cookie | Register account & seed categories |
+| `/login` | `POST` | None | `{ email, password }` | `{ user, access_token }` + Set Cookie | Email/Password login |
+| `/google` | `POST` | None | `{ id_token }` | `{ user, access_token }` + Set Cookie | Google OAuth verification |
+| `/refresh` | `POST` | Cookie | None | `{ access_token }` + Set Cookie | Token Rotation |
+| `/logout` | `POST` | Cookie | None | `{ message: "Logged out" }` + Clear Cookie | Revoke current session |
+| `/logout-all` | `POST` | Bearer | None | `{ message: "Logged out all" }` + Clear Cookie | Revoke all user sessions |
+| `/forgot-password`| `POST` | None | `{ email }` | `{ message: "Reset link sent" }` | Request password reset token |
+| `/reset-password` | `POST` | None | `{ token, new_password }` | `{ message: "Password reset" }` | Reset password via token |
+| `/change-password`| `POST` | Bearer | `{ current_password, new_password }` | `{ message: "Password updated" }` | Authenticated password update |
+| `/me` | `GET` | Bearer | None | `{ id, email, full_name, created_at }` | Get current user profile |
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/v1/dashboard/summary?period=day\|week\|month` | Total spend, recent expenses, budget status for the selected period |
-| `GET /api/v1/dashboard/charts?period=...` | Pie (by category) + trend (over time) chart data |
-| `GET /api/v1/dashboard/comparison?period=month` | FR-23 — current vs previous period totals + % change |
-| `GET /api/v1/dashboard/top-categories?period=...&limit=5` | FR-24 — ranked category spend |
-| `GET /api/v1/dashboard/average-spend?period=...` | FR-25 — normalized average spend per day/week |
+### 7.2 Expense Endpoints (`/api/v1/expenses`)
 
-### 7.5 Category Deletion Contract
+| Endpoint | Method | Query Parameters / Body | Description |
+|---|---|---|---|
+| `/expenses` | `GET` | `page`, `page_size`, `category_id`, `search`, `start_date`, `end_date`, `min_amount`, `max_amount`, `payment_mode`, `sort_by`, `order` | Paginated, filtered expenses belonging strictly to `current_user.id` |
+| `/expenses` | `POST` | `{ title, amount, category_id, date, notes?, payment_mode? }` | Create expense linked to `current_user.id` |
+| `/expenses/{id}` | `PUT` | `{ title?, amount?, category_id?, date?, notes?, payment_mode? }` | Update expense owned by `current_user.id` |
+| `/expenses/{id}` | `DELETE` | None | Delete expense owned by `current_user.id` |
 
-`DELETE /api/v1/categories/{id}`
+### 7.3 Category Endpoints (`/api/v1/categories`)
 
-| Query Param | Behavior |
-|---|---|
-| *(none)*, category unused | Deletes immediately |
-| *(none)*, category has linked expenses | Returns `409 Conflict` with `{ "linked_expense_count": N }` — frontend shows warning dialog |
-| `?reassign_to={other_category_id}` | Reassigns all linked expenses to the target category, then deletes the category |
-| `?cascade=true` | Deletes the category **and** all linked expenses (after explicit user confirmation) |
+| Endpoint | Method | Query Parameters / Body | Description |
+|---|---|---|---|
+| `/categories` | `GET` | None | List all categories for `current_user.id` with linked expense counts |
+| `/categories` | `POST` | `{ name }` | Create custom category for `current_user.id` |
+| `/categories/{id}` | `PUT` | `{ name }` | Rename category owned by `current_user.id` |
+| `/categories/{id}` | `DELETE` | `?reassign_to={cat_id}` or `?cascade=true` | Safe deletion: 409 Conflict if linked; reassign or cascade delete |
 
-### 7.6 Health Endpoints
+### 7.4 Budget Endpoints (`/api/v1/budget`)
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /health` | Liveness — app process is running (no access key required) |
-| `GET /health/db` | Readiness — database connection is alive (no access key required; used by Render health checks) |
+| Endpoint | Method | Body | Description |
+|---|---|---|---|
+| `/budget` | `POST` | `{ period, amount_limit, category_id? }` | Set or update budget limit for `current_user.id` |
+| `/budget/status` | `GET` | `?period=monthly` | Real-time budget progress, remaining balance, and alert status (`on_track`, `near_limit`, `over_budget`) |
 
-### 7.7 Documentation
+### 7.5 Dashboard Analytics (`/api/v1/dashboard`)
 
-FastAPI auto-generates OpenAPI/Swagger at `/docs` and `/redoc`. Every endpoint must declare a `response_model` so the contract stays accurate without manual documentation drift.
-
----
-
-## 8. Database Design
-
-### 8.1 ORM & Migrations
-
-- SQLAlchemy 2.0 (async, declarative with `Mapped[]` typing)
-- Alembic for all schema changes — no manual DDL, no hand-edited tables
-- `Amount` fields use `Numeric(10,2)`, never `Float` (money precision)
-- Every table includes `user_id` (default = 1 in V1) to keep Phase 2 login migration non-breaking
-
-### 8.2 Core Tables
-
-| Table | Key Fields |
-|---|---|
-| `users` | id, (auth fields added in Phase 2) |
-| `categories` | id, name, is_default, user_id |
-| `expenses` | id, title, amount, category_id (FK), date, notes, payment_mode, user_id |
-| `budgets` | id, period, amount_limit, category_id (nullable = overall), user_id |
-
-### 8.3 Seed Policy
-
-Only default starter categories (Food, Transport, Rent, Utilities, Entertainment, Other) may be seeded, marked `is_default = true`. **No fake expenses, no dummy budgets** — this directly satisfies PRD requirement FR-30.
+| Endpoint | Method | Query Parameters | Description |
+|---|---|---|---|
+| `/dashboard/summary` | `GET` | `?period=day\|week\|month` | Total spend, recent expenses, and budget status for `current_user.id` |
+| `/dashboard/charts` | `GET` | `?period=day\|week\|month` | Category donut data and spending trend line/bars for `current_user.id` |
+| `/dashboard/comparison` | `GET` | `?period=month` | Month-over-Month comparison with percentage delta |
+| `/dashboard/top-categories`| `GET`| `?period=...&limit=5` | Ranked top spend categories for `current_user.id` |
+| `/dashboard/average-spend` | `GET` | `?period=...` | Normalized daily and weekly spend averages for `current_user.id` |
 
 ---
 
-## 9. UI/UX Requirements
+## 8. Database Design & Relational Schema
 
-### 9.1 Form Validation
+### 8.1 Table Specifications
 
-- `react-hook-form` + `zod`, validation mode: `onChange`
-- Rules mirror backend Pydantic validation exactly: positive amount, no future date, required title/category
-- Errors shown inline; toast (`sonner`) for submit-level failures
+#### 1. `users` Table
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    hashed_password VARCHAR(255) NULL,
+    full_name VARCHAR(150) NOT NULL,
+    google_id VARCHAR(255) NULL UNIQUE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX ix_users_email ON users(email);
+CREATE INDEX ix_users_google_id ON users(google_id);
+```
 
-### 9.2 Animation — Framer Motion (centralized in `lib/animations/variants.ts`)
+#### 2. `refresh_tokens` Table
+```sql
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    device_info VARCHAR(255) NULL,
+    ip_address VARCHAR(45) NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    is_revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    revoked_at TIMESTAMPTZ NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX ix_refresh_tokens_hash ON refresh_tokens(token_hash);
+CREATE INDEX ix_refresh_tokens_user_id ON refresh_tokens(user_id);
+```
 
-| Area | Animation |
-|---|---|
-| Expense list add/remove | `AnimatePresence` + `layout` — fade/slide in, slide-out on delete |
-| Dashboard totals | Count-up animation on value change |
-| Budget progress bar | Animated width + color transition (green → yellow → red) |
-| Category pills | `whileTap={{ scale: 0.95 }}` |
-| Modals/drawers | Slide-up (mobile), fade+scale (desktop) |
-| Animation duration | Kept within 150–300ms — never longer |
+#### 3. `password_reset_tokens` Table
+```sql
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX ix_password_reset_hash ON password_reset_tokens(token_hash);
+```
 
-### 9.3 Micro-interactions
+#### 4. `categories` Table
+```sql
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_category_name_user UNIQUE (name, user_id)
+);
+CREATE INDEX ix_categories_user_id ON categories(user_id);
+```
 
-- Button hover: subtle scale/shadow lift
-- Input focus: smooth border/glow transition
-- Success states: checkmark animation; budget-goal-achieved gets a celebratory moment
-- Skeleton loaders (not spinners) for dashboard/list data fetches
-- Friendly empty state (real, dynamic — never a hardcoded placeholder record)
+#### 5. `expenses` Table
+```sql
+CREATE TABLE expenses (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    amount NUMERIC(10, 2) NOT NULL CHECK (amount > 0),
+    date DATE NOT NULL,
+    notes TEXT NULL,
+    payment_mode VARCHAR(50) NULL,
+    category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX ix_expenses_user_id ON expenses(user_id);
+CREATE INDEX ix_expenses_date ON expenses(date);
+CREATE INDEX ix_expenses_category_id ON expenses(category_id);
+```
 
-### 9.4 Responsive Design (all devices)
-
-- Tailwind CSS, mobile-first breakpoints
-- Mobile: stacked charts, card-based expense list, `HamburgerMenu` (slide-in drawer)
-- Desktop: side-by-side chart grid, table-based expense list, persistent `Sidebar`
-- Minimum 44×44px touch targets on mobile
-- `useMediaQuery` hook drives conditional rendering between Sidebar/HamburgerMenu
-
-### 9.5 3D (limited, purposeful use only)
-
-- `@react-three/fiber` + `@react-three/drei`, used **only** for empty-state illustration or a budget-goal-achieved celebration
-- Never used for charts (Recharts/2D stays authoritative for data readability)
-- Lazy-loaded (`dynamic(..., { ssr: false })`), with a static image fallback on mobile for performance
-
----
-
-## 10. Deployment Strategy
-
-### 10.1 Stage 1 — Local Development (No Docker)
-
-- Local PostgreSQL instance (or local Supabase CLI) for iteration
-- Backend: `uvicorn app.main:app --reload --port 8000`
-- Frontend: `npm run dev`
-- Full CRUD, dashboard, and validation flow manually verified before moving to containerization
-- Access-key middleware can be disabled locally via `APP_ENV=development` for faster iteration, but must be re-enabled before any deployed environment
-
-### 10.2 Stage 2 — Docker (Deployment Parity)
-
-- Separate Dockerfiles for `backend/` and `frontend/`
-- `docker-compose.yml` retained for local container-parity testing only, not for production
-
-### 10.3 Production Hosting
-
-| Component | Platform | Notes |
-|---|---|---|
-| Frontend | Vercel | Auto preview deployments per branch; env vars set in dashboard |
-| Backend | Render | Docker-based; `render.yaml` for infra-as-code; `/health` used for health checks; free tier has cold starts |
-| Database | Supabase | Pooled connection (6543) for app runtime, direct (5432) for migrations; `sslmode=require` |
-
-V1 is intentionally deployed publicly for accessibility, and is protected by the shared-access-key gate described in Section 6.5 — this resolves the earlier conflict between "no public exposure" and cloud hosting by making public hosting safe rather than forbidding it.
-
-### 10.4 CORS
-
-`ALLOWED_ORIGINS` must include both the Vercel production URL and `localhost:3000` for local testing against a deployed backend.
-
----
-
-## 11. Version Control — .gitignore Policy
-
-**Backend, Frontend, and Root each maintain their own `.gitignore`.** Environment files (including `APP_ACCESS_KEY`), dependency directories, build artifacts, caches, and OS files are excluded; `.env.example` files are the only environment-related files committed.
-
----
-
-## 12. Non-Functional Requirements (carried from PRD)
-
-- Dashboard and reports must load from real, database-driven data at any data volume
-- Architecture must support later phases (login, recurring expenses, multi-currency) without major rework
-- No hardcoded or dummy data in any phase, at any layer
-- Every module (backend routes, frontend components/hooks) must be independently testable
-- Each phase follows Run → Test → Deploy before the next phase begins
-- The V1 access-key gate must not silently fail open — a missing/misconfigured `APP_ACCESS_KEY` must fail app startup, not skip the check
-
----
-
-## 13. Testing Strategy
-
-| Layer | Tooling |
-|---|---|
-| Backend | `pytest` + `httpx.AsyncClient` — one test file per router (expenses, categories, budget, **dashboard**) |
-| Frontend | Component/hook tests under `frontend/tests/` (dashboard, expenses, categories) |
-| API Contract | Swagger (`/docs`) cross-checked against frontend `types/api.ts` |
-| Manual E2E (V1) | Full add → view → edit → delete → dashboard-reflects-change flow, category delete with reassign/cascade, on both mobile and desktop breakpoints |
+#### 6. `budgets` Table
+```sql
+CREATE TABLE budgets (
+    id SERIAL PRIMARY KEY,
+    period VARCHAR(20) NOT NULL DEFAULT 'monthly',
+    amount_limit NUMERIC(10, 2) NOT NULL CHECK (amount_limit > 0),
+    category_id INTEGER NULL REFERENCES categories(id) ON DELETE SET NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX ix_budgets_user_id ON budgets(user_id);
+```
 
 ---
 
-## 14. Definition of Done (V1) — carried from PRD
+## 9. Frontend Client Interceptor & Session Lifecycle
 
-- Full expense CRUD working end-to-end
-- Dynamic categories: create, edit, delete (with reassign-or-cascade guard and warning)
-- Dashboard: total spend, recent expenses, at least 2 charts, MoM comparison, top categories, average spend, live budget status
-- Daily/Weekly/Monthly period toggle functional across the dashboard
-- Search + at least 2 filters + at least 2 sort options, usable together
-- Budget goal with live remaining balance and status indicator
-- Navigation functional across breakpoints
-- Amount/date validation enforced on both frontend and backend
-- Shared-access-key gate protects all non-health routes
-- Zero hardcoded/demo data anywhere in the app
-- Backend tests exist for all four routers; frontend tests exist for dashboard, expenses, categories
-- Deployed (Vercel + Render + Supabase) and verified end-to-end before Phase 2 begins
+### 9.1 Silent Token Refresh Protocol (`apiFetch`)
+```
+Request triggered
+   │
+   ├─► Attach Authorization: Bearer <accessToken>
+   │
+   ▼
+Server returns response
+   │
+   ├─► Status 200/201: Return Data
+   │
+   └─► Status 401 (Unauthorized):
+         │
+         ├─► Lock concurrent requests (Queue mechanism)
+         ├─► Call POST /api/v1/auth/refresh (Cookie sent automatically)
+         │     │
+         │     ├─► 200 OK: Update in-memory AccessToken, replay queued requests
+         │     │
+         │     └─► 401/403 Failed: Clear AuthContext, redirect to /login
+```
 
 ---
 
-## 15. Future Phases (Reference — see PRD v2.0 Section 13)
+## 10. Verification & Test Plan
 
-Real login (replacing the shared-key gate) & sync, income tracking, recurring expenses, **report export**, social/shared budgets, AI-based prediction, multi-currency, biometric lock, and monetization are explicitly deferred beyond V1 and must not be pulled forward into this scope.
+1. **Unit & Security Tests (`pytest`)**:
+   - `test_register_success`: Verifies password hashing and default category creation.
+   - `test_login_invalid_password`: Verifies 401 on bad credentials.
+   - `test_refresh_token_rotation`: Verifies that using a refresh token revokes it and produces a new valid hash.
+   - `test_refresh_token_revocation`: Verifies logout prevents subsequent refresh calls.
+   - `test_user_data_isolation`: Verifies that User A receives 404 when querying/modifying User B's expenses.
+2. **E2E & Frontend Flow**:
+   - Google Sign-In button flow with verified token payload.
+   - Complete login -> dashboard -> log expense -> logout cycle.
+   - Cross-browser cookie persistence and silent token refresh.

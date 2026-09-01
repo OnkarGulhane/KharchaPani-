@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.user import User
     from app.models.category import Category
 
 
@@ -18,8 +19,13 @@ class Expense(Base):
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     payment_mode: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
-    category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, default=1, nullable=False, index=True)
+    category_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
 
     # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="expenses")
     category: Mapped["Category"] = relationship("Category", back_populates="expenses")

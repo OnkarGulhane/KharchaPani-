@@ -1,23 +1,22 @@
 import { env } from "@/config/env";
-import { SuccessResponse } from "@/types/api";
 
-const DEFAULT_DEV_KEY = "dev-shared-access-key-kharcha-pani";
+let inMemoryAccessToken: string | null = null;
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+export const setAccessToken = (token: string | null): void => {
+  inMemoryAccessToken = token;
+};
+
+export const getAccessToken = (): string | null => {
+  return inMemoryAccessToken;
+};
 
 export const getAppKey = (): string => {
   if (typeof window !== "undefined") {
-    const saved = localStorage.getItem("kharcha_app_key");
-    if (
-      saved &&
-      saved.trim() &&
-      saved !== "undefined" &&
-      saved !== "null" &&
-      !saved.includes("Cannot read properties") &&
-      !saved.includes("Failed to fetch")
-    ) {
-      return saved;
-    }
+    return localStorage.getItem("kharcha_app_key") || "dev-shared-access-key-kharcha-pani";
   }
-  return DEFAULT_DEV_KEY;
+  return "dev-shared-access-key-kharcha-pani";
 };
 
 export const setAppKey = (key: string): void => {
@@ -30,6 +29,15 @@ export const removeAppKey = (): void => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("kharcha_app_key");
   }
+};
+
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+const addRefreshSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
 };
 
 export class ApiError extends Error {
@@ -48,33 +56,96 @@ export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const key = getAppKey();
+  const url = `${env.apiBaseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
-  if (key) {
-    headers["X-App-Key"] = key;
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const url = `${env.apiBaseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-
-  const res = await fetch(url, {
+  const fetchOptions: RequestInit = {
     ...options,
     headers,
-  });
+    credentials: "include", // Essential for HttpOnly refresh cookie transmission
+  };
 
-  if (res.status === 401) {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("kharcha_app_key");
-      if (!window.location.pathname.startsWith("/access")) {
-        window.location.href = "/access";
+  let res = await fetch(url, fetchOptions);
+
+  // Handle 401 Unauthorized with Automatic Silent Refresh
+  if (res.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh") && !endpoint.includes("/auth/register") && !endpoint.includes("/auth/google")) {
+    if (!isRefreshing) {
+      isRefreshing = true;
+
+      try {
+        const refreshUrl = `${env.apiBaseUrl}/auth/refresh`;
+        const refreshRes = await fetch(refreshUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const newToken = refreshData?.data?.access_token;
+          if (newToken) {
+            setAccessToken(newToken);
+            isRefreshing = false;
+            onRefreshed(newToken);
+
+            // Replay original request with new token
+            headers["Authorization"] = `Bearer ${newToken}`;
+            res = await fetch(url, { ...fetchOptions, headers });
+          } else {
+            throw new Error("Missing new access token in refresh response");
+          }
+        } else {
+          isRefreshing = false;
+          setAccessToken(null);
+          if (typeof window !== "undefined") {
+            const path = window.location.pathname;
+            if (!path.startsWith("/login") && !path.startsWith("/register") && !path.startsWith("/forgot-password") && !path.startsWith("/reset-password")) {
+              window.location.href = "/login";
+            }
+          }
+          throw new ApiError("Session expired. Please log in again.", 401);
+        }
+      } catch (err) {
+        isRefreshing = false;
+        setAccessToken(null);
+        if (typeof window !== "undefined") {
+          const path = window.location.pathname;
+          if (!path.startsWith("/login") && !path.startsWith("/register") && !path.startsWith("/forgot-password") && !path.startsWith("/reset-password")) {
+            window.location.href = "/login";
+          }
+        }
+        throw new ApiError("Session expired. Please log in again.", 401);
       }
+    } else {
+      // Queue concurrent requests until refresh finishes
+      return new Promise<T>((resolve, reject) => {
+        addRefreshSubscriber(async (newToken: string) => {
+          headers["Authorization"] = `Bearer ${newToken}`;
+          try {
+            const retryRes = await fetch(url, { ...fetchOptions, headers });
+            const data = await parseResponse<T>(retryRes);
+            resolve(data);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
     }
-    throw new ApiError("Unauthorized. Please check your Access Key.", 401);
   }
 
+  return parseResponse<T>(res);
+}
+
+async function parseResponse<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type");
   let body: any = null;
   if (contentType && contentType.includes("application/json")) {

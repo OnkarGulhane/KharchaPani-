@@ -1,0 +1,1250 @@
+{
+  "info": {
+    "_postman_id": "kharcha-pani-api-v2",
+    "name": "Kharcha Pani - Expense Tracker API Collection",
+    "description": "Complete Postman collection for manual and automated API testing of Kharcha Pani REST APIs (FastAPI backend). Includes Categories, Expenses, Budgeting, Dashboard & Health endpoints with pre-configured variables and tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string",
+      "description": "Backend API Base URL (default: http://127.0.0.1:8000 or your Render/Cloud URL)"
+    },
+    {
+      "key": "apiKey",
+      "value": "dev-shared-access-key-kharcha-pani",
+      "type": "string",
+      "description": "Shared access key sent via X-App-Key header"
+    },
+    {
+      "key": "categoryId",
+      "value": "1",
+      "type": "string",
+      "description": "Default category ID for testing"
+    },
+    {
+      "key": "createdCategoryId",
+      "value": "1",
+      "type": "string",
+      "description": "Auto-populated by 'Create Category' test script"
+    },
+    {
+      "key": "expenseId",
+      "value": "1",
+      "type": "string",
+      "description": "Default expense ID for testing"
+    },
+    {
+      "key": "createdExpenseId",
+      "value": "1",
+      "type": "string",
+      "description": "Auto-populated by 'Create Expense' test script"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "0. Health & System",
+      "item": [
+        {
+          "name": "0.1 Root API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Returns basic API metadata, docs URLs, and version."
+          },
+          "response": []
+        },
+        {
+          "name": "0.2 Liveness Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Backend status is ok\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql(\"ok\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Unprotected liveness check endpoint to verify backend service is up and running."
+          },
+          "response": []
+        },
+        {
+          "name": "0.3 Database Readiness Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Database connection is ok\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql(\"ok\");",
+                  "    pm.expect(jsonData.database).to.eql(\"connected\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/db",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "db"]
+            },
+            "description": "Verifies active database connection with a test SQL query."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. Categories",
+      "item": [
+        {
+          "name": "1.1 Get All Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Response has success flag\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "if (jsonData.data && jsonData.data.length > 0) {",
+                  "    pm.collectionVariables.set(\"categoryId\", jsonData.data[0].id);",
+                  "    console.log(\"Saved categoryId:\", jsonData.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories"]
+            },
+            "description": "Fetches all categories with expense counts."
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Category created successfully\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.name).to.exist;",
+                  "});",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"createdCategoryId\", jsonData.data.id);",
+                  "    console.log(\"Saved createdCategoryId:\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Entertainment & Movies\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories"]
+            },
+            "description": "Creates a new custom expense category."
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Update Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Category name updated\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Entertainment & Weekend Trips\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{createdCategoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{createdCategoryId}}"]
+            },
+            "description": "Renames an existing category by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Delete Category (Safe Check / Guarded)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{createdCategoryId}}?cascade=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{createdCategoryId}}"],
+              "query": [
+                {
+                  "key": "cascade",
+                  "value": "false",
+                  "description": "If false and category has linked expenses, it prevents accidental deletion (returns 409 conflict)."
+                }
+              ]
+            },
+            "description": "Attempts safe deletion of a category. Fails safely if linked expenses exist without cascade=true or reassign_to."
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Delete Category with Reassign",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{createdCategoryId}}?reassign_to={{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{createdCategoryId}}"],
+              "query": [
+                {
+                  "key": "reassign_to",
+                  "value": "{{categoryId}}",
+                  "description": "Target category ID to reassign linked expenses before deleting"
+                }
+              ]
+            },
+            "description": "Reassigns linked expenses to another category and deletes the specified category."
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Force Delete Category (Cascade)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/{{createdCategoryId}}?cascade=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories", "{{createdCategoryId}}"],
+              "query": [
+                {
+                  "key": "cascade",
+                  "value": "true",
+                  "description": "Deletes category and ALL linked expenses permanently"
+                }
+              ]
+            },
+            "description": "Force deletes a category and all expenses linked to it."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Expenses",
+      "item": [
+        {
+          "name": "2.1 Get All Expenses (Paginated & Default Sort)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Paginated data structure is valid\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.items).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.data.total_count).to.be.a(\"number\");",
+                  "});",
+                  "if (jsonData.data.items && jsonData.data.items.length > 0) {",
+                  "    pm.collectionVariables.set(\"expenseId\", jsonData.data.items[0].id);",
+                  "    console.log(\"Saved expenseId:\", jsonData.data.items[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses?page=1&page_size=20&sort_by=date&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (min: 1)"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20",
+                  "description": "Items per page (max: 100)"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "date",
+                  "description": "Sort field: date, amount, category, or title"
+                },
+                {
+                  "key": "order",
+                  "value": "desc",
+                  "description": "Sort direction: asc or desc"
+                }
+              ]
+            },
+            "description": "Fetches paginated expenses with sorting options."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Search & Multi-Filter Expenses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses?search=Coffee&category_id=1&start_date=2026-08-01&end_date=2026-08-31&min_amount=10&max_amount=5000&payment_mode=UPI&sort_by=amount&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Coffee",
+                  "description": "Case-insensitive title or notes search"
+                },
+                {
+                  "key": "category_id",
+                  "value": "1",
+                  "description": "Filter by category ID"
+                },
+                {
+                  "key": "start_date",
+                  "value": "2026-08-01",
+                  "description": "Filter expenses starting from this date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-08-31",
+                  "description": "Filter expenses up to this date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "min_amount",
+                  "value": "10",
+                  "description": "Minimum amount filter"
+                },
+                {
+                  "key": "max_amount",
+                  "value": "5000",
+                  "description": "Maximum amount filter"
+                },
+                {
+                  "key": "payment_mode",
+                  "value": "UPI",
+                  "description": "Filter by payment mode: UPI, Cash, Credit Card, Debit Card, Net Banking"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "amount",
+                  "description": "Sort by: amount"
+                },
+                {
+                  "key": "order",
+                  "value": "desc",
+                  "description": "Order: desc"
+                }
+              ]
+            },
+            "description": "Comprehensive search and multi-filtering example (all filters are composable)."
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Create Expense (Log New Expense)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Expense logged successfully\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.title).to.eql(\"CCD Cold Coffee & Sandwich\");",
+                  "    pm.expect(parseFloat(jsonData.data.amount)).to.eql(260.5);",
+                  "});",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"createdExpenseId\", jsonData.data.id);",
+                  "    console.log(\"Saved createdExpenseId:\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"CCD Cold Coffee & Sandwich\",\n  \"amount\": 260.50,\n  \"date\": \"2026-08-27\",\n  \"category_id\": 1,\n  \"payment_mode\": \"UPI\",\n  \"notes\": \"Evening snack with colleagues, paid via GPay\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"]
+            },
+            "description": "Logs a new expense entry with amount, category, payment mode, notes, and date."
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Update Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Expense updated successfully\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(parseFloat(jsonData.data.amount)).to.eql(310);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"CCD Cold Coffee (Large) & Sandwich\",\n  \"amount\": 310.00,\n  \"date\": \"2026-08-27\",\n  \"category_id\": 1,\n  \"payment_mode\": \"UPI\",\n  \"notes\": \"Updated final bill amount with taxes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/{{createdExpenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", "{{createdExpenseId}}"]
+            },
+            "description": "Updates an existing expense entry by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Delete Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Expense deleted successfully\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/{{createdExpenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", "{{createdExpenseId}}"]
+            },
+            "description": "Deletes an expense entry by its ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Budget",
+      "item": [
+        {
+          "name": "3.1 Set Overall Monthly Budget",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Overall budget set successfully\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(parseFloat(jsonData.data.amount_limit)).to.eql(25000);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period\": \"monthly\",\n  \"amount_limit\": 25000.00,\n  \"category_id\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/budget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "budget"]
+            },
+            "description": "Sets or updates the overall monthly budget limit."
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Set Category-Specific Budget",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Category budget set successfully\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.category_id).to.eql(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period\": \"monthly\",\n  \"amount_limit\": 6000.00,\n  \"category_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/budget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "budget"]
+            },
+            "description": "Sets a dedicated budget limit for an individual category."
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Get All Budget Goals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Budget list returned\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/budget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "budget"]
+            },
+            "description": "Fetches all configured budget targets (overall and category-level)."
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Get Overall Budget Status & Alerts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status contains calculations and alert state\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.total_budget).to.exist;",
+                  "    pm.expect(jsonData.data.total_spent).to.exist;",
+                  "    pm.expect(jsonData.data.remaining_balance).to.exist;",
+                  "    pm.expect([\"on_track\", \"near_limit\", \"over_budget\"]).to.include(jsonData.data.status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/budget/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "budget", "status"]
+            },
+            "description": "Calculates live spent vs budget limit and status (on_track < 80%, near_limit >= 80%, over_budget >= 100%)."
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Get Category Budget Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/budget/status?category_id={{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "budget", "status"],
+              "query": [
+                {
+                  "key": "category_id",
+                  "value": "{{categoryId}}",
+                  "description": "Target category ID"
+                }
+              ]
+            },
+            "description": "Calculates live budget utilization and alert status for a specific category."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Dashboard & Analytics",
+      "item": [
+        {
+          "name": "4.1 Dashboard Summary (Month)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Summary structure is complete\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.period).to.eql(\"month\");",
+                  "    pm.expect(jsonData.data.total_spent).to.exist;",
+                  "    pm.expect(jsonData.data.recent_expenses).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/summary?period=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month",
+                  "description": "Period toggle: day, week, or month"
+                }
+              ]
+            },
+            "description": "Fetches total spent, recent transactions, and budget health for the selected period."
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Dashboard Summary (Week / Day)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/summary?period=week",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "week",
+                  "description": "Period toggle: day, week, or month"
+                }
+              ]
+            },
+            "description": "Weekly period summary toggle view."
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 Category Breakdown & Trend Charts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Charts data structure is present\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.pie_chart).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.data.trend_chart).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/charts?period=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "charts"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month",
+                  "description": "Period: day, week, or month"
+                }
+              ]
+            },
+            "description": "Provides data series for category breakdown (Pie chart) and timeline spend trends (Line/Bar chart)."
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Month-over-Month (MoM) Spend Comparison",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Comparison metrics valid\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.current_period_total).to.exist;",
+                  "    pm.expect(jsonData.data.previous_period_total).to.exist;",
+                  "    pm.expect(jsonData.data.percentage_change).to.be.a(\"number\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/comparison",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "comparison"]
+            },
+            "description": "Compares current month spend against previous month and computes percentage delta."
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 Top Spending Categories Ranked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Top categories array returned\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/top-categories?period=month&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "top-categories"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month",
+                  "description": "Period: day, week, or month"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Top N categories (1 to 10)"
+                }
+              ]
+            },
+            "description": "Returns top ranked categories by total spend."
+          },
+          "response": []
+        },
+        {
+          "name": "4.6 Normalized Daily & Weekly Average Spend",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Averages returned\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.average_daily_spend).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/dashboard/average-spend?period=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "dashboard", "average-spend"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month",
+                  "description": "Period: day, week, or month"
+                }
+              ]
+            },
+            "description": "Calculates normalized average daily and weekly burn rate for selected period."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Error & Edge Cases (Validation Tests)",
+      "item": [
+        {
+          "name": "5.1 Unauthorized - Missing / Wrong API Key (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "invalid-wrong-secret-key",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "categories"]
+            },
+            "description": "Verifies that supplying an invalid access key returns 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Validation Error - Negative Amount (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422 Unprocessable Entity\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Invalid Negative Expense\",\n  \"amount\": -500,\n  \"date\": \"2026-08-27\",\n  \"category_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"]
+            },
+            "description": "Verifies that negative amount validation rejects the payload with 422."
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Validation Error - Future Date (422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422 Unprocessable Entity\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Future Expense\",\n  \"amount\": 500,\n  \"date\": \"2030-01-01\",\n  \"category_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses"]
+            },
+            "description": "Verifies that future date is rejected by backend validator with 422."
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Not Found - Invalid Expense ID (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-App-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/expenses/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "expenses", "999999"]
+            },
+            "description": "Verifies 404 response when modifying/deleting non-existent expense."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

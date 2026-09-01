@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Database URLs
-    # Defaults to SQLite async for local zero-config dev/testing
     DATABASE_URL: str = "sqlite+aiosqlite:///./kharchapani.db"
     DATABASE_URL_POOLED: Union[str, None] = None
 
@@ -30,6 +29,17 @@ class Settings(BaseSettings):
     # Shared access key (V1 public host protection gate)
     APP_ACCESS_KEY: str = "dev-shared-access-key-kharcha-pani"
 
+    # JWT & Authentication (Phase 2)
+    JWT_SECRET_KEY: str = "kharcha-pani-super-secure-jwt-secret-key-for-signing-access-tokens-2026"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 24
+
+    # Google OAuth 2.0 (Phase 2)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+
     # Server port
     PORT: int = 8000
 
@@ -39,7 +49,6 @@ class Settings(BaseSettings):
         import os
         if isinstance(v, str):
             v = v.strip().strip("'").strip('"')
-            # Fallback to SQLite if localhost PostgreSQL is specified in a cloud deployment (Render/Docker)
             if ("localhost:5432" in v or "127.0.0.1:5432" in v) and os.getenv("RENDER"):
                 return "sqlite+aiosqlite:///./kharchapani.db"
             if v.startswith("postgres://"):
