@@ -8,8 +8,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import PWAInstallBanner from "@/components/common/PWAInstallBanner";
 import PWAInstallModal from "@/components/common/PWAInstallModal";
-import PWAUpdateBanner from "@/components/common/PWAUpdateBanner";
 import OfflineIndicator from "@/components/common/OfflineIndicator";
+import Script from "next/script";
 import { Toaster } from "sonner";
 
 export const viewport: Viewport = {
@@ -56,6 +56,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-background text-gray-100 antialiased min-h-screen">
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <PWAProvider>
           <QueryProvider>
             <CurrencyProvider>
@@ -65,7 +66,6 @@ export default function RootLayout({
                   <AppLayout>{children}</AppLayout>
                   <PWAInstallBanner />
                   <PWAInstallModal />
-                  <PWAUpdateBanner />
                   <Toaster theme="dark" position="top-right" richColors />
                 </AuthProvider>
               </GoogleProvider>

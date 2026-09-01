@@ -68,13 +68,7 @@ export const GoogleSignInButton: React.FC = () => {
     }
 
     try {
-      // Check if google SDK is loaded in window
-      if (typeof window !== "undefined" && (window as any).google?.accounts?.oauth2) {
-        handleLogin();
-      } else {
-        // If Google SDK is not loaded yet or blocked, use direct OAuth redirect
-        triggerDirectOAuth();
-      }
+      handleLogin();
     } catch {
       triggerDirectOAuth();
     }
