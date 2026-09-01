@@ -26,9 +26,9 @@ export const GoogleSignInButton: React.FC = () => {
       <button
         type="button"
         onClick={handleCustomGoogleClick}
-        className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-slate-700/80 bg-slate-800/60 hover:bg-slate-800 hover:border-slate-600 text-slate-200 text-sm font-medium transition-all duration-200 shadow-sm hover:shadow active:scale-[0.99]"
+        className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 bg-slate-800/40 hover:bg-slate-800/80 hover:border-slate-600 text-slate-200 text-sm font-semibold transition-all duration-200 shadow-sm active:scale-[0.99] group"
       >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-105" viewBox="0 0 24 24">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -54,12 +54,12 @@ export const GoogleSignInButton: React.FC = () => {
   return (
     <div className="w-full flex flex-col items-center justify-center">
       {loading ? (
-        <div className="w-full flex items-center justify-center py-2.5 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-sm">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+        <div className="w-full h-11 sm:h-12 flex items-center justify-center px-4 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 text-sm font-medium">
+          <Loader2 className="w-4 h-4 animate-spin mr-2 text-emerald-400" />
           Authenticating with Google...
         </div>
       ) : (
-        <div className="w-full flex justify-center [&>div]:w-full [&>div>iframe]:!w-full [&>div>iframe]:!rounded-xl">
+        <div className="w-full flex justify-center [&>div]:w-full [&>div>iframe]:!w-full [&>div>iframe]:!rounded-xl [&>div>iframe]:!h-[46px]">
           <GoogleLogin
             onSuccess={async (credentialResponse) => {
               if (credentialResponse.credential) {
@@ -75,7 +75,7 @@ export const GoogleSignInButton: React.FC = () => {
               toast.error("Google login was cancelled or failed");
             }}
             theme="filled_black"
-            shape="pill"
+            shape="rectangular"
             text="continue_with"
             width="100%"
           />
