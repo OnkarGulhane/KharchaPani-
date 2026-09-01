@@ -25,13 +25,13 @@ export const GoogleSignInButton: React.FC = () => {
       }
     },
     onError: (errorResponse) => {
+      setLoading(false);
       console.error("Google OAuth error:", errorResponse);
       toast.error("Google sign-in failed", {
         description:
           errorResponse.error_description ||
           "Please verify that this domain is added to Authorized JavaScript Origins in Google Cloud Console.",
       });
-      setLoading(false);
     },
   });
 
@@ -42,7 +42,6 @@ export const GoogleSignInButton: React.FC = () => {
       });
       return;
     }
-    setLoading(true);
     try {
       handleLogin();
     } catch (err: any) {
@@ -58,12 +57,12 @@ export const GoogleSignInButton: React.FC = () => {
       type="button"
       onClick={handleClick}
       disabled={loading}
-      className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 bg-slate-800/40 hover:bg-slate-800/80 hover:border-slate-600 text-slate-200 text-sm font-semibold transition-all duration-200 shadow-sm active:scale-[0.99] disabled:opacity-60 group"
+      className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 bg-slate-800/40 hover:bg-slate-800/80 hover:border-slate-600 text-slate-200 text-sm font-semibold transition-all duration-200 shadow-sm active:scale-[0.99] disabled:opacity-75 group cursor-pointer"
     >
       {loading ? (
         <div className="flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-          <span>Connecting to Google...</span>
+          <span>Signing you in...</span>
         </div>
       ) : (
         <>

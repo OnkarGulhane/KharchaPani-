@@ -140,8 +140,8 @@ class AuthService:
         id_token_str: str,
         request: Optional[Request] = None,
     ) -> Tuple[User, str, str]:
-        """Authenticate or register user via verified Google ID token."""
-        google_data = GoogleAuthService.verify_google_id_token(id_token_str)
+        """Authenticate or register user via verified Google ID token or OAuth access token."""
+        google_data = await GoogleAuthService.verify_google_token_async(id_token_str)
         email = google_data["email"]
         google_id = google_data["google_id"]
         full_name = google_data["full_name"]
