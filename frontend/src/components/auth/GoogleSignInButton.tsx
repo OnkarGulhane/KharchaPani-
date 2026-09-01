@@ -10,6 +10,7 @@ declare global {
   interface Window {
     google?: any;
   }
+  
 }
 
 export const GoogleSignInButton: React.FC = () => {
@@ -31,15 +32,18 @@ export const GoogleSignInButton: React.FC = () => {
       if (!isMounted) return;
       if (window.google?.accounts?.id && containerRef.current) {
         try {
-          window.google.accounts.id.initialize({
+            window.google.accounts.id.initialize({
             client_id: clientId,
             callback: async (credentialResponse: any) => {
-              if (credentialResponse.credential) {
+              if (credentialResponse?.credential) {
                 setLoading(true);
                 try {
                   await googleLogin(credentialResponse.credential);
                 } catch (err: any) {
                   console.error("Google Auth error:", err);
+                  toast.error("Google Sign-In failed", {
+                    description: err?.message || "Authentication error. Please try again.",
+                  });
                 } finally {
                   if (isMounted) setLoading(false);
                 }
@@ -49,6 +53,7 @@ export const GoogleSignInButton: React.FC = () => {
             },
             auto_select: false,
             cancel_on_tap_outside: true,
+            use_fedcm_for_button: true,
           });
 
           // Clear existing children before rendering
@@ -66,6 +71,11 @@ export const GoogleSignInButton: React.FC = () => {
           }
 
           setGsiReady(true);
+          try {
+            window.google.accounts.id.prompt();
+          } catch {
+            // Prompt display is optional
+          }
         } catch (e) {
           console.error("Error rendering Google Sign-In button:", e);
         }
@@ -109,8 +119,8 @@ export const GoogleSignInButton: React.FC = () => {
       ) : (
         <div
           ref={containerRef}
-          className={`w-full flex justify-center overflow-hidden rounded-xl transition-opacity duration-200 ${
-            gsiReady ? "opacity-100" : "opacity-0 h-0"
+          className={`w-full flex justify-center transition-opacity duration-200 ${
+            gsiReady ? "opacity-100 min-h-[44px]" : "opacity-0 h-0"
           }`}
         />
       )}
