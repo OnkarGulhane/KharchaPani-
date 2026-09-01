@@ -1,5 +1,5 @@
 import asyncio
-from sqlalchemy import select
+from sqlalchemy import select, text
 from app.core.config import settings
 from app.core.database import engine, AsyncSessionLocal
 from app.models import Base, User
@@ -38,11 +38,20 @@ async def ensure_postgres_database_exists() -> None:
 
 
 async def init_db() -> None:
-    """Initialize database tables, default user, and seed starter categories."""
+    """Initialize database tables, migrate legacy constraints, and seed starter categories."""
     await ensure_postgres_database_exists()
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        # Clean up legacy V1 single-column category unique constraint if present
+        if "postgresql" in settings.DATABASE_URL:
+            try:
+                await conn.execute(text("DROP INDEX IF EXISTS ix_categories_name;"))
+                await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_name_key;"))
+                await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS uq_categories_name;"))
+            except Exception:
+                pass
 
     async with AsyncSessionLocal() as session:
         # Check if default user 1 exists

@@ -26,7 +26,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Middleware with allow_credentials=True for HttpOnly cookies
+# 1. Access Key Middleware (Runs inner)
+app.add_middleware(AccessKeyMiddleware)
+
+# 2. CORS Middleware (Added last so it wraps all responses and handles preflight OPTIONS & errors first)
 dev_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -41,14 +44,12 @@ allowed_origins = list(set(dev_origins + configured_origins))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:\d+|http://127\.0\.0\.1:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
-
-# Access Key Middleware (Gracefully allows Auth routes and Bearer tokens)
-app.add_middleware(AccessKeyMiddleware)
 
 # Health router (unprotected)
 app.include_router(health.router)

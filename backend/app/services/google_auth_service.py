@@ -22,10 +22,12 @@ class GoogleAuthService:
 
         try:
             # Cryptographically verify the ID token with Google's public keys
+            # clock_skew_in_seconds allows tolerance for small time drifts between local machine and Google servers
             id_info = id_token.verify_oauth2_token(
                 token_str,
                 google_requests.Request(),
                 client_id,
+                clock_skew_in_seconds=60,
             )
 
             # Verify issuer

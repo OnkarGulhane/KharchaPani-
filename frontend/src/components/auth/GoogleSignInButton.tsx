@@ -59,7 +59,7 @@ export const GoogleSignInButton: React.FC = () => {
           Authenticating with Google...
         </div>
       ) : (
-        <div className="w-full flex justify-center [&>div]:w-full [&>div>iframe]:!w-full [&>div>iframe]:!rounded-xl [&>div>iframe]:!h-[46px]">
+        <div className="w-full flex justify-center overflow-hidden rounded-xl">
           <GoogleLogin
             onSuccess={async (credentialResponse) => {
               if (credentialResponse.credential) {
@@ -72,12 +72,15 @@ export const GoogleSignInButton: React.FC = () => {
               }
             }}
             onError={() => {
-              toast.error("Google login was cancelled or failed");
+              toast.error("Google login failed", {
+                description: "Check if this domain is added to Authorized JavaScript Origins in Google Cloud Console.",
+              });
             }}
             theme="filled_black"
             shape="rectangular"
+            size="large"
             text="continue_with"
-            width="100%"
+            width="360"
           />
         </div>
       )}
