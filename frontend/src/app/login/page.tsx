@@ -64,11 +64,11 @@ export default function LoginPage() {
 
       {/* Clean Divider */}
       <div className="flex items-center gap-3 my-5">
-        <div className="h-[1px] flex-1 bg-slate-800/90" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 select-none">
+        <div className="h-[1px] flex-1 bg-slate-800" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 select-none">
           or continue with email
         </span>
-        <div className="h-[1px] flex-1 bg-slate-800/90" />
+        <div className="h-[1px] flex-1 bg-slate-800" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -83,7 +83,7 @@ export default function LoginPage() {
               type="email"
               placeholder="you@example.com"
               {...register("email")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/70 border ${
+              className={`w-full h-11 bg-slate-950/70 border ${
                 errors.email
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
                   : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
@@ -114,7 +114,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               {...register("password")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/70 border ${
+              className={`w-full h-11 bg-slate-950/70 border ${
                 errors.password
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
                   : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
@@ -139,7 +139,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full h-11 sm:h-12 mt-2 flex items-center justify-center gap-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full h-11 mt-2 flex items-center justify-center gap-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

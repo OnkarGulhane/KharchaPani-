@@ -45,7 +45,7 @@ export default function RegisterPage() {
   const passwordValue = watch("password") || "";
   const confirmPasswordValue = watch("confirm_password") || "";
 
-  // Password rules validation for live visual feedback
+  // Real-time password requirement checks
   const hasMinLength = passwordValue.length >= 8;
   const hasUppercase = /[A-Z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
@@ -59,7 +59,7 @@ export default function RegisterPage() {
     try {
       await registerUser(data.full_name, data.email, data.password);
     } catch {
-      // Error handled with toast in AuthContext
+      // Handled in AuthContext with toast
     } finally {
       setIsSubmitting(false);
     }
@@ -67,9 +67,9 @@ export default function RegisterPage() {
 
   return (
     <AuthCard
-      maxWidth="lg"
+      maxWidth="md"
       title="Create your account"
-      subtitle="Join Kharcha Pani to track expenses, set budget goals, and gain visual insights"
+      subtitle="Sign up for free to start managing expenses and tracking your budget"
       footer={
         <p className="text-slate-400">
           Already have an account?{" "}
@@ -88,156 +88,139 @@ export default function RegisterPage() {
         <GoogleSignInButton />
       </div>
 
-      {/* Clean Modern Divider without background overlap hacks */}
+      {/* Clean Divider */}
       <div className="flex items-center gap-3 my-5">
-        <div className="h-[1px] flex-1 bg-slate-800/90" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 select-none">
-          or register with email
+        <div className="h-[1px] flex-1 bg-slate-800" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 select-none">
+          or continue with email
         </span>
-        <div className="h-[1px] flex-1 bg-slate-800/90" />
+        <div className="h-[1px] flex-1 bg-slate-800" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Row 1: Full Name & Email Address */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Full Name Field */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-              Full Name
-            </label>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Onkar Gulhane"
-                {...register("full_name")}
-                className={`w-full h-11 sm:h-12 bg-slate-950/70 border ${
-                  errors.full_name
-                    ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                    : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
-                } rounded-xl pl-10 pr-3.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
-              />
-            </div>
-            {errors.full_name && (
-              <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
-                {errors.full_name.message}
-              </p>
-            )}
+        {/* Full Name */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+            Full Name
+          </label>
+          <div className="relative">
+            <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="e.g. Onkar Gulhane"
+              {...register("full_name")}
+              className={`w-full h-11 bg-slate-950/70 border ${
+                errors.full_name
+                  ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
+                  : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
+            />
           </div>
-
-          {/* Email Address Field */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="email"
-                placeholder="you@example.com"
-                {...register("email")}
-                className={`w-full h-11 sm:h-12 bg-slate-950/70 border ${
-                  errors.email
-                    ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                    : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
-                } rounded-xl pl-10 pr-3.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
-              />
-            </div>
-            {errors.email && (
-              <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
+          {errors.full_name && (
+            <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
+              {errors.full_name.message}
+            </p>
+          )}
         </div>
 
-        {/* Row 2: Password & Confirm Password */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Password Field */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Create password"
-                {...register("password")}
-                className={`w-full h-11 sm:h-12 bg-slate-950/70 border ${
-                  errors.password
-                    ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                    : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
-                } rounded-xl pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-0.5 rounded-lg focus:outline-none"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
-                {errors.password.message}
-              </p>
-            )}
+        {/* Email Address */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+            Email Address
+          </label>
+          <div className="relative">
+            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="email"
+              placeholder="you@example.com"
+              {...register("email")}
+              className={`w-full h-11 bg-slate-950/70 border ${
+                errors.email
+                  ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
+                  : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
+            />
           </div>
-
-          {/* Confirm Password Field */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Repeat password"
-                {...register("confirm_password")}
-                className={`w-full h-11 sm:h-12 bg-slate-950/70 border ${
-                  errors.confirm_password
-                    ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                    : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
-                } rounded-xl pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                tabIndex={-1}
-                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-0.5 rounded-lg focus:outline-none"
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            {errors.confirm_password && (
-              <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
-                {errors.confirm_password.message}
-              </p>
-            )}
-          </div>
+          {errors.email && (
+            <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
-        {/* Live Password Requirements & Strength Indicator */}
+        {/* Password */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="At least 8 characters"
+              {...register("password")}
+              className={`w-full h-11 bg-slate-950/70 border ${
+                errors.password
+                  ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
+                  : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-0.5 rounded-lg focus:outline-none"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        {/* Confirm Password */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+            Confirm Password
+          </label>
+          <div className="relative">
+            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Re-enter your password"
+              {...register("confirm_password")}
+              className={`w-full h-11 bg-slate-950/70 border ${
+                errors.confirm_password
+                  ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
+                  : "border-slate-800 focus:border-emerald-400 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:ring-2`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              tabIndex={-1}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-0.5 rounded-lg focus:outline-none"
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {errors.confirm_password && (
+            <p className="text-[11px] text-rose-400 font-medium mt-1 pl-1">
+              {errors.confirm_password.message}
+            </p>
+          )}
+        </div>
+
+        {/* Password Strength & Requirements Checklist */}
         {passwordValue.length > 0 && (
-          <div className="p-3.5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2.5">
-            {/* Strength Bar */}
+          <div className="p-3 bg-slate-950/60 border border-slate-800/90 rounded-xl space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-400 font-medium">
-                Password Strength:
-              </span>
+              <span className="text-[11px] text-slate-400 font-medium">Password strength:</span>
               <span
                 className={`text-[11px] font-bold ${
                   strengthScore === 3
@@ -247,11 +230,7 @@ export default function RegisterPage() {
                     : "text-rose-400"
                 }`}
               >
-                {strengthScore === 3
-                  ? "Strong"
-                  : strengthScore === 2
-                  ? "Moderate"
-                  : "Weak"}
+                {strengthScore === 3 ? "Strong" : strengthScore === 2 ? "Moderate" : "Weak"}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-1.5 h-1.5 w-full">
@@ -272,8 +251,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Checklist Pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
               <div
                 className={`flex items-center gap-1.5 text-[11px] ${
                   hasMinLength ? "text-emerald-400 font-medium" : "text-slate-500"
@@ -284,7 +262,7 @@ export default function RegisterPage() {
                 ) : (
                   <X className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
                 )}
-                <span>8+ chars</span>
+                <span>8+ characters</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 text-[11px] ${
@@ -320,7 +298,7 @@ export default function RegisterPage() {
                 ) : (
                   <X className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
                 )}
-                <span>Match</span>
+                <span>Passwords match</span>
               </div>
             </div>
           </div>
@@ -330,12 +308,12 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full h-11 sm:h-12 mt-2 flex items-center justify-center gap-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full h-11 mt-2 flex items-center justify-center gap-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-              <span>Creating your account...</span>
+              <span>Creating account...</span>
             </>
           ) : (
             <>
