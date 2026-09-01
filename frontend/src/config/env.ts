@@ -10,7 +10,7 @@ const getSanitizedApiBaseUrl = (): string => {
       if (rawApiUrl) {
         return rawApiUrl.endsWith("/api/v1") ? rawApiUrl : `${rawApiUrl}/api/v1`;
       }
-      return "/api/v1";
+      return "https://kharchapani-0lon.onrender.com/api/v1";
     }
 
     // In local development, match the current hostname (localhost or 127.0.0.1) on port 8000
@@ -21,7 +21,7 @@ const getSanitizedApiBaseUrl = (): string => {
     return rawApiUrl.endsWith("/api/v1") ? rawApiUrl : `${rawApiUrl}/api/v1`;
   }
 
-  return "http://localhost:8000/api/v1";
+  return "https://kharchapani-0lon.onrender.com/api/v1";
 };
 
 export const env = {
