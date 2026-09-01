@@ -56,7 +56,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-background text-gray-100 antialiased min-h-screen">
-        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <PWAProvider>
           <QueryProvider>
             <CurrencyProvider>
