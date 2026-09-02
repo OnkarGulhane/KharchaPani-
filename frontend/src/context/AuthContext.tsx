@@ -155,7 +155,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success("Google Sign-In successful!", {
         description: `Logged in as ${res.user.full_name}`,
       });
-      router.push("/");
+      // Clean redirect to dashboard ensuring fresh session data
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      } else {
+        router.push("/");
+      }
     } catch (err: any) {
       toast.error("Google Sign-In failed", {
         description: err.message || "Could not authenticate with Google",
