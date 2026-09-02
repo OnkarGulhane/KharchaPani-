@@ -44,14 +44,17 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
-        # Clean up legacy V1 single-column category unique constraint if present
+        # Ensure all columns exist on PostgreSQL
         if "postgresql" in settings.DATABASE_URL:
             try:
+                await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;"))
+                await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;"))
+                await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);"))
                 await conn.execute(text("DROP INDEX IF EXISTS ix_categories_name;"))
                 await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_name_key;"))
                 await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS uq_categories_name;"))
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"PostgreSQL table/column check notice: {e}")
 
     async with AsyncSessionLocal() as session:
         # Check if default user 1 exists
@@ -62,7 +65,7 @@ async def init_db() -> None:
         if not default_user:
             default_user = User(
                 id=1,
-                email="admin@kharchapani.local",
+                email="admin@kharchapani.com",
                 full_name="Default User",
                 hashed_password=get_password_hash("KharchaPani@2026"),
                 is_active=True,

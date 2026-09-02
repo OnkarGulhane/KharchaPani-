@@ -71,13 +71,16 @@ async def register(
     set_refresh_cookie(response, refresh_token)
 
     # Generate email verification token and dispatch email in background
-    verify_token = await AuthService.create_email_verification_token(db, user.id)
-    background_tasks.add_task(
-        EmailService.send_verification_email,
-        to_email=user.email,
-        verification_token=verify_token,
-        user_name=user.full_name,
-    )
+    try:
+        verify_token = await AuthService.create_email_verification_token(db, user.id)
+        background_tasks.add_task(
+            EmailService.send_verification_email,
+            to_email=user.email,
+            verification_token=verify_token,
+            user_name=user.full_name,
+        )
+    except Exception as exc:
+        print(f"[Register] Background email verification notice: {exc}")
 
     return APIResponse(
         data=TokenResponse(
