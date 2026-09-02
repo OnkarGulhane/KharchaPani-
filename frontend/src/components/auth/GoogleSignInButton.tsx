@@ -12,6 +12,8 @@ declare global {
   }
 }
 
+let isGsiInitialized = false;
+
 export const GoogleSignInButton: React.FC = () => {
   const { googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -40,8 +42,9 @@ export const GoogleSignInButton: React.FC = () => {
       if (!isMounted) return;
 
       // 2a. In-Page ID Token listener (One-Tap / FedCM)
-      if (window.google?.accounts?.id) {
+      if (window.google?.accounts?.id && !isGsiInitialized) {
         try {
+          isGsiInitialized = true;
           window.google.accounts.id.initialize({
             client_id: clientId,
             callback: async (response: any) => {

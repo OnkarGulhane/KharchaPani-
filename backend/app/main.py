@@ -54,14 +54,26 @@ app.add_middleware(
 # Health router (unprotected)
 app.include_router(health.router)
 
+from starlette.responses import JSONResponse
+
 # Global exception handler for actionable error diagnostics
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     import traceback
     print(f"Unhandled Exception on {request.url.path}: {exc}")
     traceback.print_exc()
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
     return JSONResponse(
         status_code=500,
+        headers=headers,
         content={
             "success": False,
             "error": "InternalServerError",
