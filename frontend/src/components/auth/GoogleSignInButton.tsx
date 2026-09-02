@@ -15,13 +15,22 @@ declare global {
 export const GoogleSignInButton: React.FC = () => {
   const { googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<string>("Connecting to Google...");
   const tokenClientRef = useRef<any>(null);
 
   const clientId =
     env.googleClientId ||
     "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
 
-  // Pre-load Google Identity Services script
+  // 1. Pre-warm Render backend service in background to eliminate cold start
+  useEffect(() => {
+    try {
+      const healthUrl = `${env.apiBaseUrl.replace(/\/api\/v1\/?$/, "")}/health`;
+      fetch(healthUrl, { method: "GET", mode: "cors", cache: "no-store" }).catch(() => {});
+    } catch {}
+  }, []);
+
+  // 2. Pre-load Google Identity Services script
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -36,7 +45,10 @@ export const GoogleSignInButton: React.FC = () => {
             scope: "openid email profile",
             callback: async (response: any) => {
               if (response?.access_token) {
-                if (isMounted) setLoading(true);
+                if (isMounted) {
+                  setLoading(true);
+                  setLoadingStep("Verifying Google account...");
+                }
                 try {
                   await googleLogin(response.access_token);
                 } catch (err: any) {
@@ -51,7 +63,7 @@ export const GoogleSignInButton: React.FC = () => {
               } else if (response?.error) {
                 if (isMounted) setLoading(false);
                 if (response.error !== "popup_closed_by_user") {
-                  toast.error("Google Sign-In was cancelled or failed");
+                  toast.error("Google Sign-In was cancelled or encountered an error");
                 }
               }
             },
@@ -88,13 +100,21 @@ export const GoogleSignInButton: React.FC = () => {
   const handleGoogleSignIn = useCallback(() => {
     if (loading) return;
 
+    setLoading(true);
+    setLoadingStep("Selecting Google account...");
+
+    // Safety timeout: Reset loading after 25s if popup is closed without event
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 25000);
+
     // 1. If Google GIS Token Client is ready, open standard account chooser popup
     if (tokenClientRef.current) {
       try {
-        setLoading(true);
         tokenClientRef.current.requestAccessToken({ prompt: "select_account" });
         return;
       } catch (e) {
+        clearTimeout(safetyTimer);
         setLoading(false);
         console.warn("Token client request failed:", e);
       }
@@ -103,12 +123,13 @@ export const GoogleSignInButton: React.FC = () => {
     // 2. If SDK is still loading, re-initialize on demand
     if (window.google?.accounts?.oauth2) {
       try {
-        setLoading(true);
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: "openid email profile",
           callback: async (response: any) => {
+            clearTimeout(safetyTimer);
             if (response?.access_token) {
+              setLoadingStep("Signing you in...");
               try {
                 await googleLogin(response.access_token);
               } catch (err: any) {
@@ -127,10 +148,13 @@ export const GoogleSignInButton: React.FC = () => {
         client.requestAccessToken({ prompt: "select_account" });
         return;
       } catch (e) {
+        clearTimeout(safetyTimer);
         setLoading(false);
       }
     }
 
+    clearTimeout(safetyTimer);
+    setLoading(false);
     toast.info("Connecting to Google authentication...", {
       description: "Please click again in a moment.",
     });
@@ -141,12 +165,14 @@ export const GoogleSignInButton: React.FC = () => {
       type="button"
       onClick={handleGoogleSignIn}
       disabled={loading}
-      className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800/90 hover:border-slate-600 text-slate-100 font-semibold text-sm shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
+      className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 dark:border-slate-700/80 light:border-slate-300 bg-slate-900/90 dark:bg-slate-900/90 light:bg-white hover:bg-slate-800/90 dark:hover:bg-slate-800/90 light:hover:bg-slate-50 hover:border-slate-600 dark:hover:border-slate-600 light:hover:border-slate-400 text-slate-100 dark:text-slate-100 light:text-slate-800 font-semibold text-sm shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] disabled:opacity-75 disabled:cursor-not-allowed group cursor-pointer"
     >
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-          <span className="text-slate-300">Connecting to Google...</span>
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-400 dark:text-emerald-400 light:text-emerald-600" />
+          <span className="text-slate-300 dark:text-slate-300 light:text-slate-700 font-medium animate-pulse">
+            {loadingStep}
+          </span>
         </>
       ) : (
         <>
@@ -171,7 +197,7 @@ export const GoogleSignInButton: React.FC = () => {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span className="tracking-tight text-slate-100 font-medium">Continue with Google</span>
+          <span className="tracking-tight font-medium">Continue with Google</span>
         </>
       )}
     </button>
