@@ -22,7 +22,7 @@ export const GoogleSignInButton: React.FC = () => {
     env.googleClientId ||
     "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
 
-  // 1. Pre-warm Render backend service in background to eliminate cold start
+  // 1. Pre-warm Render backend service on mount
   useEffect(() => {
     try {
       const healthUrl = `${env.apiBaseUrl.replace(/\/api\/v1\/?$/, "")}/health`;
@@ -30,26 +30,24 @@ export const GoogleSignInButton: React.FC = () => {
     } catch {}
   }, []);
 
-  // 2. Pre-initialize Google Identity Services & Token Client
+  // 2. Initialize Google Identity Services
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     let isMounted = true;
 
-    const setupGoogleClients = () => {
+    const setupGoogle = () => {
       if (!isMounted) return;
 
-      // Initialize Google Identity Services (One-Tap / Credential listener)
+      // 2a. Initialize One-Tap / ID Token listener
       if (window.google?.accounts?.id) {
         try {
           window.google.accounts.id.initialize({
             client_id: clientId,
             callback: async (response: any) => {
-              if (response?.credential) {
-                if (isMounted) {
-                  setLoading(true);
-                  setLoadingStep("Signing you in...");
-                }
+              if (response?.credential && isMounted) {
+                setLoading(true);
+                setLoadingStep("Signing you in...");
                 try {
                   await googleLogin(response.credential);
                 } catch (err: any) {
@@ -63,51 +61,58 @@ export const GoogleSignInButton: React.FC = () => {
             },
             auto_select: false,
             cancel_on_tap_outside: true,
+            itp_support: true,
           });
         } catch (e) {
-          console.warn("GSI init warning:", e);
+          console.warn("Google ID init error:", e);
         }
       }
 
-      // Initialize Google OAuth2 Token Client (Account Chooser Popup)
+      // 2b. Initialize OAuth2 Token Client (Custom button popup flow)
       if (window.google?.accounts?.oauth2) {
         try {
           tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
             client_id: clientId,
             scope: "openid email profile",
             callback: async (response: any) => {
+              if (!isMounted) return;
               if (response?.access_token) {
-                if (isMounted) {
-                  setLoading(true);
-                  setLoadingStep("Verifying credentials...");
-                }
+                setLoading(true);
+                setLoadingStep("Verifying Google account...");
                 try {
                   await googleLogin(response.access_token);
                 } catch (err: any) {
-                  console.error("Google Auth error:", err);
+                  console.error("Google login error:", err);
                   toast.error("Google Sign-In failed", {
-                    description:
-                      err?.message || "Authentication failed. Please try again.",
+                    description: err?.message || "Authentication failed.",
                   });
                 } finally {
                   if (isMounted) setLoading(false);
                 }
-              } else if (response?.error && response.error !== "popup_closed_by_user") {
+              } else if (response?.error) {
                 if (isMounted) setLoading(false);
-                toast.error("Google Sign-In was cancelled or encountered an error");
+                if (response.error !== "popup_closed_by_user") {
+                  toast.error("Google Sign-In error", {
+                    description: response.error_description || response.error,
+                  });
+                }
               } else {
                 if (isMounted) setLoading(false);
               }
             },
+            error_callback: (err: any) => {
+              if (isMounted) setLoading(false);
+              console.warn("Token client error callback:", err);
+            },
           });
         } catch (e) {
-          console.warn("Token client init warning:", e);
+          console.warn("Token client init error:", e);
         }
       }
     };
 
-    if (window.google?.accounts?.oauth2 || window.google?.accounts?.id) {
-      setupGoogleClients();
+    if (window.google?.accounts?.oauth2) {
+      setupGoogle();
     } else {
       const scriptId = "google-gsi-client-script";
       let script = document.getElementById(scriptId) as HTMLScriptElement | null;
@@ -117,10 +122,10 @@ export const GoogleSignInButton: React.FC = () => {
         script.src = "https://accounts.google.com/gsi/client";
         script.async = true;
         script.defer = true;
-        script.onload = () => setupGoogleClients();
+        script.onload = setupGoogle;
         document.body.appendChild(script);
       } else {
-        script.addEventListener("load", () => setupGoogleClients());
+        script.addEventListener("load", setupGoogle);
       }
     }
 
@@ -133,26 +138,23 @@ export const GoogleSignInButton: React.FC = () => {
     if (loading) return;
 
     setLoading(true);
-    setLoadingStep("Opening Google account chooser...");
+    setLoadingStep("Opening Google sign-in...");
 
-    // Safety timeout: Reset loading after 25s if user cancels or closes popup
     const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 25000);
+    }, 20000);
 
-    // 1. If Token Client is ready, open official account chooser popup
+    // 1. Try Token Client
     if (tokenClientRef.current) {
       try {
         tokenClientRef.current.requestAccessToken({ prompt: "select_account" });
         return;
       } catch (e) {
-        clearTimeout(safetyTimer);
-        setLoading(false);
         console.warn("Token client request failed:", e);
       }
     }
 
-    // 2. If SDK loaded dynamically, re-initialize on demand
+    // 2. Try on-demand init if token client wasn't ready
     if (window.google?.accounts?.oauth2) {
       try {
         const client = window.google.accounts.oauth2.initTokenClient({
@@ -175,6 +177,10 @@ export const GoogleSignInButton: React.FC = () => {
               setLoading(false);
             }
           },
+          error_callback: () => {
+            clearTimeout(safetyTimer);
+            setLoading(false);
+          },
         });
         tokenClientRef.current = client;
         client.requestAccessToken({ prompt: "select_account" });
@@ -185,7 +191,7 @@ export const GoogleSignInButton: React.FC = () => {
       }
     }
 
-    // 3. Fallback to Google One-Tap Prompt
+    // 3. Fallback to One-Tap prompt
     if (window.google?.accounts?.id) {
       try {
         window.google.accounts.id.prompt((notification: any) => {
