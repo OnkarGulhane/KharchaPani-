@@ -44,15 +44,25 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
-        # Ensure all columns exist on PostgreSQL
+        # Ensure all columns and constraints exist on PostgreSQL
         if "postgresql" in settings.DATABASE_URL:
             try:
+                # 1. Users table
                 await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;"))
                 await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;"))
                 await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);"))
+
+                # 2. Refresh tokens table
+                await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS device_info VARCHAR(255);"))
+                await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"))
+                await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS is_revoked BOOLEAN DEFAULT FALSE;"))
+                await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP WITH TIME ZONE;"))
+
+                # 3. Categories legacy unique constraint fix
                 await conn.execute(text("DROP INDEX IF EXISTS ix_categories_name;"))
                 await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_name_key;"))
                 await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS uq_categories_name;"))
+                await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_categories_name ON categories (name);"))
             except Exception as e:
                 print(f"PostgreSQL table/column check notice: {e}")
 

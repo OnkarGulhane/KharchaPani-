@@ -52,6 +52,8 @@ def upgrade() -> None:
             sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
             sa.Column('token_hash', sa.String(length=64), nullable=False),
+            sa.Column('device_info', sa.String(length=255), nullable=True),
+            sa.Column('ip_address', sa.String(length=45), nullable=True),
             sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
             sa.Column('is_revoked', sa.Boolean(), nullable=False, server_default=sa.text('false')),
             sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
@@ -62,6 +64,12 @@ def upgrade() -> None:
         op.create_index(op.f('ix_refresh_tokens_id'), 'refresh_tokens', ['id'], unique=False)
         op.create_index(op.f('ix_refresh_tokens_user_id'), 'refresh_tokens', ['user_id'], unique=False)
         op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=True)
+    else:
+        rt_columns = [c['name'] for c in inspector.get_columns('refresh_tokens')]
+        if 'device_info' not in rt_columns:
+            op.add_column('refresh_tokens', sa.Column('device_info', sa.String(length=255), nullable=True))
+        if 'ip_address' not in rt_columns:
+            op.add_column('refresh_tokens', sa.Column('ip_address', sa.String(length=45), nullable=True))
 
     # 3. password_reset_tokens table
     if 'password_reset_tokens' not in existing_tables:
