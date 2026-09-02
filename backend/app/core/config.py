@@ -40,6 +40,27 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: str = ""
 
+    # Email Service Configuration
+    EMAIL_PROVIDER: str = "gmail"  # "gmail" or "resend"
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    # Gmail SMTP Configuration
+    GMAIL_SMTP_HOST: str = "smtp.gmail.com"
+    GMAIL_SMTP_PORT: int = 587
+    GMAIL_SMTP_USERNAME: str = ""
+    GMAIL_SMTP_PASSWORD: str = ""
+    GMAIL_FROM_EMAIL: str = ""
+    GMAIL_FROM_NAME: str = "KharchaPani"
+
+    # Resend API Configuration
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = ""
+    RESEND_FROM_NAME: str = "KharchaPani"
+
+    # Token Expiry Configuration (Minutes)
+    EMAIL_VERIFICATION_EXPIRE_MINUTES: int = 30
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 30
+
     # Server port
     PORT: int = 8000
 

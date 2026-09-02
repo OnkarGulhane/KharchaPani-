@@ -70,3 +70,22 @@ def auth_headers_user1():
     """Generate valid JWT Authorization header for User 1."""
     token = create_access_token(data={"sub": "1", "email": "testuser@example.com"})
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def db_session():
+    """Yield test async database session."""
+    override = app.dependency_overrides.get(get_db)
+    if override:
+        async for session in override():
+            yield session
+
+
+@pytest_asyncio.fixture
+async def test_user(db_session: AsyncSession):
+    """Retrieve test user 1."""
+    from sqlalchemy import select
+    stmt = select(User).where(User.id == 1)
+    res = await db_session.execute(stmt)
+    return res.scalar_one()
+

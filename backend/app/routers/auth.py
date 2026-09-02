@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -14,12 +15,15 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     RefreshTokenResponse,
     RegisterRequest,
+    ResendVerificationRequest,
     ResetPasswordRequest,
     TokenResponse,
+    VerifyEmailRequest,
 )
 from app.schemas.response import APIResponse
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
+from app.services.email_service import EmailService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -59,11 +63,21 @@ async def register(
     data: RegisterRequest,
     request: Request,
     response: Response,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    """Register a new user, automatically seed default starter categories, and issue JWT session."""
+    """Register a new user, seed starter categories, send verification email, and issue JWT session."""
     user, access_token, refresh_token = await AuthService.register_user(db, data, request)
     set_refresh_cookie(response, refresh_token)
+
+    # Generate email verification token and dispatch email in background
+    verify_token = await AuthService.create_email_verification_token(db, user.id)
+    background_tasks.add_task(
+        EmailService.send_verification_email,
+        to_email=user.email,
+        verification_token=verify_token,
+        user_name=user.full_name,
+    )
 
     return APIResponse(
         data=TokenResponse(
@@ -72,7 +86,60 @@ async def register(
             user=UserResponse.model_validate(user),
             refresh_token=refresh_token,
         ),
-        message="Account registered successfully",
+        message="Account registered successfully. Please check your email to verify your account.",
+    )
+
+
+@router.post("/verify-email", response_model=APIResponse[dict])
+async def verify_email_post(
+    data: VerifyEmailRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Verify user's email address using token submitted in request body."""
+    user = await AuthService.verify_email(db, data.token)
+    return APIResponse(
+        data={"verified": True, "email": user.email},
+        message="Email verified successfully. Your account is now active.",
+    )
+
+
+@router.get("/verify-email", response_model=APIResponse[dict])
+async def verify_email_get(
+    token: str = Query(..., min_length=10, description="Verification token from link"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Verify user's email address via link query parameter."""
+    user = await AuthService.verify_email(db, token)
+    return APIResponse(
+        data={"verified": True, "email": user.email},
+        message="Email verified successfully. Your account is now active.",
+    )
+
+
+@router.post("/resend-verification", response_model=APIResponse[dict])
+async def resend_verification(
+    data: ResendVerificationRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend email verification link without revealing user existence."""
+    email_clean = data.email.strip().lower()
+    stmt = select(User).where(User.email == email_clean)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if user and not user.is_verified:
+        verify_token = await AuthService.create_email_verification_token(db, user.id)
+        background_tasks.add_task(
+            EmailService.send_verification_email,
+            to_email=user.email,
+            verification_token=verify_token,
+            user_name=user.full_name,
+        )
+
+    return APIResponse(
+        data={"sent": True},
+        message="If this email is registered and unverified, a verification link has been sent to your inbox.",
     )
 
 
@@ -125,57 +192,49 @@ async def refresh_token(
     request: Request,
     response: Response,
     body_data: Optional[RefreshTokenRequest] = None,
-    kharcha_refresh_token: Optional[str] = Cookie(None, alias=REFRESH_COOKIE_NAME),
+    cookie_token: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
     db: AsyncSession = Depends(get_db),
 ):
-    """Rotate refresh token: validates cookie or body token, issues new access token & refresh cookie."""
-    token_str = (
-        (body_data.refresh_token if body_data and body_data.refresh_token else None)
-        or kharcha_refresh_token
-        or request.cookies.get(REFRESH_COOKIE_NAME)
-    )
-    if not token_str:
+    """Rotate refresh token: invalidates old refresh token, issues a new access token and fresh refresh token."""
+    token_candidate = cookie_token or (body_data.refresh_token if body_data else None)
+
+    if not token_candidate:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token cookie missing",
+            detail="Refresh token missing. Please log in again.",
         )
 
-    new_access_token, new_refresh_token = await AuthService.rotate_refresh_token(db, token_str, request)
+    access_token, new_refresh_token = await AuthService.rotate_refresh_token(db, token_candidate, request)
     set_refresh_cookie(response, new_refresh_token)
 
     return APIResponse(
         data=RefreshTokenResponse(
-            access_token=new_access_token,
+            access_token=access_token,
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             refresh_token=new_refresh_token,
         ),
-        message="Token refreshed successfully",
+        message="Session refreshed successfully",
     )
 
 
 @router.post("/logout", response_model=APIResponse[dict])
 async def logout(
-    request: Request,
     response: Response,
     body_data: Optional[RefreshTokenRequest] = None,
-    kharcha_refresh_token: Optional[str] = Cookie(None, alias=REFRESH_COOKIE_NAME),
+    cookie_token: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
     db: AsyncSession = Depends(get_db),
 ):
-    """Logout from current device: revokes refresh token in database and clears cookie."""
-    token_str = (
-        (body_data.refresh_token if body_data and body_data.refresh_token else None)
-        or kharcha_refresh_token
-        or request.cookies.get(REFRESH_COOKIE_NAME)
-    )
-    if token_str:
-        await AuthService.revoke_refresh_token(db, token_str)
+    """Logout from current device: revokes provided refresh token and clears cookie."""
+    token_candidate = cookie_token or (body_data.refresh_token if body_data else None)
+    if token_candidate:
+        await AuthService.revoke_refresh_token(db, token_candidate)
 
     clear_refresh_cookie(response)
     return APIResponse(data={"logged_out": True}, message="Logged out successfully")
 
 
 @router.post("/logout-all", response_model=APIResponse[dict])
-async def logout_all(
+async def logout_all_devices(
     response: Response,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -189,15 +248,23 @@ async def logout_all(
 @router.post("/forgot-password", response_model=APIResponse[dict])
 async def forgot_password(
     data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    """Request password reset link."""
+    """Request password reset link without revealing user existence."""
     reset_token = await AuthService.create_password_reset_token(db, data.email)
-    # In production, email sending service delivers reset_token link.
-    # In development/testing, we return success response.
+    
+    if reset_token:
+        # Schedule email sending via BackgroundTasks
+        background_tasks.add_task(
+            EmailService.send_password_reset_email,
+            to_email=data.email,
+            reset_token=reset_token,
+        )
+
     return APIResponse(
         data={"sent": True, "reset_token": reset_token if settings.DEBUG else None},
-        message="If this email is registered, a password reset link has been generated.",
+        message="If this email is registered, a password reset link has been sent to your inbox.",
     )
 
 
@@ -206,7 +273,7 @@ async def reset_password(
     data: ResetPasswordRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """Reset password using verified reset token."""
+    """Reset password using verified single-use reset token."""
     await AuthService.reset_password(db, data.token, data.new_password)
     return APIResponse(data={"reset": True}, message="Password has been reset successfully. Please log in.")
 

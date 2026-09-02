@@ -12,6 +12,7 @@ from app.core.security import (
     hash_token,
     verify_password,
 )
+from app.models.email_verification import EmailVerificationToken
 from app.models.password_reset import PasswordResetToken
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
@@ -277,6 +278,70 @@ class AuthService:
         await db.commit()
 
     @staticmethod
+    async def create_email_verification_token(db: AsyncSession, user_id: int) -> str:
+        """Generate a one-time email verification token (SHA-256 stored)."""
+        raw_token = generate_secure_token()
+        token_hash = hash_token(raw_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES)
+
+        verification_record = EmailVerificationToken(
+            user_id=user_id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+            is_used=False,
+        )
+        db.add(verification_record)
+        await db.commit()
+
+        return raw_token
+
+    @staticmethod
+    async def verify_email(db: AsyncSession, raw_token: str) -> User:
+        """Verify user's email using a single-use token."""
+        token_hash = hash_token(raw_token)
+        now = datetime.now(timezone.utc)
+
+        stmt = select(EmailVerificationToken).where(EmailVerificationToken.token_hash == token_hash)
+        result = await db.execute(stmt)
+        record = result.scalar_one_or_none()
+
+        if not record or record.is_used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or already used verification token",
+            )
+
+        expires_at = record.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        if expires_at < now:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email verification link has expired",
+            )
+
+        # Mark token as used
+        record.is_used = True
+
+        # Update user is_verified
+        stmt_user = select(User).where(User.id == record.user_id)
+        res_user = await db.execute(stmt_user)
+        user = res_user.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User account not found",
+            )
+
+        user.is_verified = True
+        await db.commit()
+        await db.refresh(user)
+
+        return user
+
+    @staticmethod
     async def create_password_reset_token(db: AsyncSession, email: str) -> Optional[str]:
         """Generate a one-time password reset token (SHA-256 stored)."""
         email_clean = email.strip().lower()
@@ -290,7 +355,7 @@ class AuthService:
 
         raw_token = generate_secure_token()
         token_hash = hash_token(raw_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.PASSWORD_RESET_TOKEN_EXPIRE_HOURS)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
 
         reset_record = PasswordResetToken(
             user_id=user.id,

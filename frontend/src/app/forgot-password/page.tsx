@@ -33,8 +33,8 @@ export default function ForgotPasswordPage() {
       if (res?.reset_token) {
         setDevResetToken(res.reset_token);
       }
-      toast.success("Password reset link generated", {
-        description: "If the email exists, instructions have been prepared.",
+      toast.success("Password reset email sent", {
+        description: "If an account exists, a recovery link has been sent to your inbox.",
       });
     } catch (err: any) {
       toast.error("Failed to submit request", {
@@ -65,9 +65,12 @@ export default function ForgotPasswordPage() {
           <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/10">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <p className="text-sm text-slate-300">
-            If an account is associated with that email, a password recovery token has been issued.
-          </p>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-white">Check your email</h3>
+            <p className="text-xs text-slate-300">
+              If an account is associated with that email, we&apos;ve sent a password reset link. Please check your inbox and spam folder.
+            </p>
+          </div>
 
           {devResetToken && (
             <div className="mt-4 p-3.5 bg-slate-950/80 border border-indigo-500/30 rounded-xl text-left">
