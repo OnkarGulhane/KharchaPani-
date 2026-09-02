@@ -1,25 +1,90 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { env } from "@/config/env";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
 export const GoogleSignInButton: React.FC = () => {
   const { googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
+  const gsiLoadedRef = useRef(false);
 
   const clientId =
     env.googleClientId ||
     "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
 
-  // Listen for OAuth success message from popup window if popup flow was used
+  // 1. Initialize Google Identity Services (GSI) for 1-click One-Tap & FedCM
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     let isMounted = true;
 
+    const initGsi = () => {
+      if (!isMounted || gsiLoadedRef.current) return;
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response: any) => {
+              if (response?.credential) {
+                if (isMounted) setLoading(true);
+                try {
+                  await googleLogin(response.credential);
+                } catch (err: any) {
+                  console.error("GSI Login Error:", err);
+                  toast.error("Google Sign-In failed", {
+                    description: err?.message || "Authentication error.",
+                  });
+                } finally {
+                  if (isMounted) setLoading(false);
+                }
+              }
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            use_fedcm_for_button: true,
+          });
+
+          gsiLoadedRef.current = true;
+          // Trigger smooth One-Tap prompt if eligible
+          try {
+            window.google.accounts.id.prompt();
+          } catch {
+            // Optional prompt
+          }
+        } catch (e) {
+          console.warn("GSI initialization warning:", e);
+        }
+      }
+    };
+
+    if (window.google?.accounts?.id) {
+      initGsi();
+    } else {
+      const scriptId = "google-gsi-client-script";
+      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = () => initGsi();
+        document.body.appendChild(script);
+      } else {
+        script.addEventListener("load", () => initGsi());
+      }
+    }
+
+    // 2. Listen for postMessage from popup window
     const handleMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.token) {
@@ -27,9 +92,8 @@ export const GoogleSignInButton: React.FC = () => {
         try {
           await googleLogin(event.data.token);
         } catch (err: any) {
-          console.error("Google auth message error:", err);
           toast.error("Google Sign-In failed", {
-            description: err?.message || "Authentication failed. Please try again.",
+            description: err?.message || "Authentication error.",
           });
         } finally {
           if (isMounted) setLoading(false);
@@ -38,12 +102,14 @@ export const GoogleSignInButton: React.FC = () => {
     };
 
     window.addEventListener("message", handleMessage);
+
     return () => {
       isMounted = false;
       window.removeEventListener("message", handleMessage);
     };
-  }, [googleLogin]);
+  }, [clientId, googleLogin]);
 
+  // 3. Primary Button Click: Triggers Google OAuth
   const handleGoogleSignIn = () => {
     if (loading) return;
     setLoading(true);
@@ -64,7 +130,7 @@ export const GoogleSignInButton: React.FC = () => {
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-      // Calculate center coordinates for popup
+      // Open centered popup window
       const width = 500;
       const height = 650;
       const left =
@@ -82,13 +148,13 @@ export const GoogleSignInButton: React.FC = () => {
         `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
       );
 
-      // If popup was blocked by browser or on mobile device, redirect directly
+      // Fallback for mobile or popup blocker
       if (!popup || popup.closed || typeof popup.closed === "undefined") {
         window.location.href = authUrl;
         return;
       }
 
-      // Check if popup closed by user
+      // Check for popup closure
       const timer = setInterval(() => {
         if (popup.closed) {
           clearInterval(timer);
