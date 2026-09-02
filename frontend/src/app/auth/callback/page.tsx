@@ -14,15 +14,16 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const processCallback = async () => {
       try {
-        // Parse access_token from hash fragment: #access_token=...&token_type=Bearer
+        // Parse access_token or id_token from hash fragment: #access_token=...&id_token=...
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const accessToken = params.get("access_token");
+        const idToken = params.get("id_token");
 
         // Also check query params in case of code or token
         const searchParams = new URLSearchParams(window.location.search);
         const queryToken = searchParams.get("access_token") || searchParams.get("id_token");
-        const token = accessToken || queryToken;
+        const token = idToken || accessToken || queryToken;
 
         if (!token) {
           const errorParam = searchParams.get("error") || params.get("error");
@@ -32,6 +33,21 @@ export default function AuthCallbackPage() {
           throw new Error("No authentication token received from Google");
         }
 
+        // If opened inside a popup window, notify the opener window and close
+        if (window.opener && !window.opener.closed) {
+          try {
+            window.opener.postMessage(
+              { type: "GOOGLE_AUTH_SUCCESS", token },
+              window.location.origin
+            );
+            window.close();
+            return;
+          } catch {
+            // Opener communication error, fallback to normal redirect flow below
+          }
+        }
+
+        // Direct full-page redirect flow
         await googleLogin(token);
       } catch (err: any) {
         console.error("Auth callback error:", err);

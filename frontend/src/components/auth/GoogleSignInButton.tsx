@@ -1,114 +1,54 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { env } from "@/config/env";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
-
 export const GoogleSignInButton: React.FC = () => {
   const { googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
-  const tokenClientRef = useRef<any>(null);
 
   const clientId =
     env.googleClientId ||
     "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
 
-  // Initialize Google OAuth2 Token Client seamlessly in the background
+  // Listen for OAuth success message from popup window if popup flow was used
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     let isMounted = true;
 
-    const setupTokenClient = () => {
-      if (!isMounted) return;
-      if (window.google?.accounts?.oauth2) {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.token) {
+        if (isMounted) setLoading(true);
         try {
-          tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-            client_id: clientId,
-            scope: "openid email profile",
-            callback: async (response: any) => {
-              if (response?.access_token) {
-                setLoading(true);
-                try {
-                  await googleLogin(response.access_token);
-                } catch (err: any) {
-                  console.error("Google login error:", err);
-                  toast.error("Google Sign-In failed", {
-                    description:
-                      err?.message || "Authentication failed. Please try again.",
-                  });
-                } finally {
-                  if (isMounted) setLoading(false);
-                }
-              } else if (response?.error) {
-                if (response.error !== "popup_closed_by_user") {
-                  toast.error("Google Sign-In cancelled or encountered an error");
-                }
-                if (isMounted) setLoading(false);
-              }
-            },
+          await googleLogin(event.data.token);
+        } catch (err: any) {
+          console.error("Google auth message error:", err);
+          toast.error("Google Sign-In failed", {
+            description: err?.message || "Authentication failed. Please try again.",
           });
-        } catch (err) {
-          console.warn("Could not initialize Google token client:", err);
+        } finally {
+          if (isMounted) setLoading(false);
         }
       }
     };
 
-    if (window.google?.accounts?.oauth2) {
-      setupTokenClient();
-    } else {
-      const scriptId = "google-gsi-client-script";
-      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-      if (!script) {
-        script = document.createElement("script");
-        script.id = scriptId;
-        script.src = "https://accounts.google.com/gsi/client";
-        script.async = true;
-        script.defer = true;
-        script.onload = () => setupTokenClient();
-        document.body.appendChild(script);
-      } else {
-        script.addEventListener("load", () => setupTokenClient());
-      }
-    }
-
+    window.addEventListener("message", handleMessage);
     return () => {
       isMounted = false;
+      window.removeEventListener("message", handleMessage);
     };
-  }, [clientId, googleLogin]);
+  }, [googleLogin]);
 
-  // Click handler that triggers Google Auth popup or redirect
-  const handleGoogleSignIn = useCallback(() => {
+  const handleGoogleSignIn = () => {
     if (loading) return;
+    setLoading(true);
 
-    // Safety timeout: automatically reset loading state after 15s if popup is dismissed
-    const safetyTimer = setTimeout(() => {
-      setLoading(false);
-    }, 15000);
-
-    // Primary: Google GSI Token Client popup
-    if (tokenClientRef.current) {
-      try {
-        setLoading(true);
-        tokenClientRef.current.requestAccessToken({ prompt: "select_account" });
-        return;
-      } catch (e) {
-        clearTimeout(safetyTimer);
-        console.warn("Token client request failed, using redirect fallback:", e);
-      }
-    }
-
-    // Secondary / Universal fallback: Direct Google OAuth 2.0 URL redirect
     try {
-      setLoading(true);
       const origin =
         typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
       const redirectUri = `${origin}/auth/callback`;
@@ -116,28 +56,59 @@ export const GoogleSignInButton: React.FC = () => {
       const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,
-        response_type: "token",
+        response_type: "token id_token",
         scope: "openid email profile",
-        include_granted_scopes: "true",
+        nonce: Math.random().toString(36).substring(2),
         prompt: "select_account",
       });
 
-      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+
+      // Calculate center coordinates for popup
+      const width = 500;
+      const height = 650;
+      const left =
+        typeof window !== "undefined"
+          ? window.screenX + (window.outerWidth - width) / 2
+          : 100;
+      const top =
+        typeof window !== "undefined"
+          ? window.screenY + (window.outerHeight - height) / 2.5
+          : 100;
+
+      const popup = window.open(
+        authUrl,
+        "KharchaPaniGoogleSignIn",
+        `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
+      );
+
+      // If popup was blocked by browser or on mobile device, redirect directly
+      if (!popup || popup.closed || typeof popup.closed === "undefined") {
+        window.location.href = authUrl;
+        return;
+      }
+
+      // Check if popup closed by user
+      const timer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(timer);
+          setLoading(false);
+        }
+      }, 1000);
     } catch (err: any) {
-      clearTimeout(safetyTimer);
       setLoading(false);
       toast.error("Failed to initiate Google sign in", {
         description: err?.message || "Please check your network connection.",
       });
     }
-  }, [clientId, loading]);
+  };
 
   return (
     <button
       type="button"
       onClick={handleGoogleSignIn}
       disabled={loading}
-      className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-750 bg-slate-900/90 hover:bg-slate-800/90 hover:border-slate-600 text-slate-100 font-semibold text-sm shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
+      className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 bg-slate-900/90 hover:bg-slate-800/90 hover:border-slate-600 text-slate-100 font-semibold text-sm shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
     >
       {loading ? (
         <>
@@ -146,7 +117,10 @@ export const GoogleSignInButton: React.FC = () => {
         </>
       ) : (
         <>
-          <svg className="w-4 h-4 flex-shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4 flex-shrink-0 transition-transform group-hover:scale-105"
+            viewBox="0 0 24 24"
+          >
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
