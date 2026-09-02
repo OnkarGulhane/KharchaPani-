@@ -1,8 +1,7 @@
-const CACHE_NAME = 'kharcha-pani-v2';
+const CACHE_NAME = 'kharcha-pani-v3-fresh';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_ASSETS = [
-  '/',
   '/offline.html',
   '/manifest.json',
   '/icons/icon-192x192.png',
@@ -14,7 +13,7 @@ const PRECACHE_ASSETS = [
   '/apple-touch-icon.png'
 ];
 
-// Install Event — Robust individual pre-caching
+// Install Event — Force instant activation
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -35,7 +34,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate Event — Clean up old caches & claim clients immediately
+// Activate Event — Instantly purge all older caches and claim clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -50,21 +49,30 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event
+// Fetch Event — Network First for scripts & pages to prevent stale cache
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Only handle GET requests with http/https scheme
   if (request.method !== 'GET' || !request.url.startsWith('http')) {
     return;
   }
 
   const url = new URL(request.url);
 
-  // 1. Navigation Requests (HTML pages): Network-first with Cache fallback and Offline Page
-  if (request.mode === 'navigate') {
+  // Skip caching API endpoints completely
+  if (url.pathname.includes('/api/')) {
+    return;
+  }
+
+  // Network First for all HTML pages and JavaScript bundles
+  if (
+    request.mode === 'navigate' ||
+    url.pathname.startsWith('/_next/static/') ||
+    request.destination === 'script' ||
+    request.destination === 'document'
+  ) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-cache' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
@@ -75,53 +83,28 @@ self.addEventListener('fetch', (event) => {
         .catch(async () => {
           const cached = await caches.match(request);
           if (cached) return cached;
-          const offlinePage = await caches.match(OFFLINE_URL);
-          return offlinePage || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+          if (request.mode === 'navigate') {
+            const offlinePage = await caches.match(OFFLINE_URL);
+            return offlinePage || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+          }
+          return new Response('Network error', { status: 503 });
         })
     );
     return;
   }
 
-  // 2. Static Resources (_next/static, fonts, icons, images): Cache-first / Stale-While-Revalidate
-  if (
-    url.pathname.startsWith('/_next/static/') ||
-    url.pathname.startsWith('/icons/') ||
-    url.hostname.includes('fonts.gstatic.com') ||
-    url.hostname.includes('fonts.googleapis.com') ||
-    request.destination === 'image' ||
-    request.destination === 'font' ||
-    request.destination === 'style' ||
-    request.destination === 'script'
-  ) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              const clone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-            }
-            return networkResponse;
-          })
-          .catch(() => cachedResponse);
-
-        return cachedResponse || fetchPromise;
-      })
-    );
-    return;
-  }
-
-  // 3. API or Other Requests
+  // Cache First for static media assets (icons, images, fonts)
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+      return fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
-        return response;
-      })
-      .catch(() => caches.match(request))
+        return networkResponse;
+      }).catch(() => new Response('Asset not found', { status: 404 }));
+    })
   );
 });
 
