@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
-import { setAccessToken } from "@/lib/api/client";
+import { setAccessToken, setRefreshToken, getRefreshToken } from "@/lib/api/client";
 import { User } from "@/types/auth";
 import { toast } from "sonner";
 
@@ -28,19 +28,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
-  const handleSetSession = (token: string, userData: User) => {
+  const handleSetSession = (token: string, userData: User, refreshToken?: string | null) => {
     setAccessToken(token);
     setAccessTokenState(token);
     setUser(userData);
+    if (refreshToken) {
+      setRefreshToken(refreshToken);
+    }
   };
 
   const handleClearSession = () => {
     setAccessToken(null);
+    setRefreshToken(null);
     setAccessTokenState(null);
     setUser(null);
   };
 
-  // Initial silent auth check on mount (optimized for sub-200ms load)
+  // Initial silent auth check on mount (optimized for Chrome & all browsers)
   useEffect(() => {
     let isMounted = true;
 
@@ -64,12 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Silent refresh attempt via HttpOnly cookie
+        // Silent refresh attempt via HttpOnly cookie or stored refresh token
         try {
           const refreshData = await authApi.refresh();
           if (refreshData?.access_token && isMounted) {
             setAccessToken(refreshData.access_token);
             setAccessTokenState(refreshData.access_token);
+            if (refreshData?.refresh_token) {
+              setRefreshToken(refreshData.refresh_token);
+            }
             const userData = await authApi.getMe();
             if (isMounted) {
               setUser(userData);
@@ -102,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const res = await authApi.login({ email, password });
-      handleSetSession(res.access_token, res.user);
+      handleSetSession(res.access_token, res.user, res.refresh_token);
       toast.success("Welcome back!", {
         description: `Logged in as ${res.user.full_name}`,
       });
@@ -125,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
       });
-      handleSetSession(res.access_token, res.user);
+      handleSetSession(res.access_token, res.user, res.refresh_token);
       toast.success("Account created successfully!", {
         description: `Welcome to Kharcha Pani, ${res.user.full_name}`,
       });
@@ -144,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const res = await authApi.googleAuth(idToken);
-      handleSetSession(res.access_token, res.user);
+      handleSetSession(res.access_token, res.user, res.refresh_token);
       toast.success("Google Sign-In successful!", {
         description: `Logged in as ${res.user.full_name}`,
       });

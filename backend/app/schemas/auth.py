@@ -23,12 +23,18 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int = 900  # 15 minutes in seconds
     user: UserResponse
+    refresh_token: Optional[str] = None
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: Optional[str] = None
 
 
 class RefreshTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int = 900
+    refresh_token: Optional[str] = None
 
 
 class ForgotPasswordRequest(BaseModel):

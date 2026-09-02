@@ -31,6 +31,31 @@ export const getAccessToken = (): string | null => {
   return null;
 };
 
+export const setRefreshToken = (token: string | null): void => {
+  if (typeof window !== "undefined") {
+    try {
+      if (token) {
+        localStorage.setItem("kharcha_refresh_token", token);
+      } else {
+        localStorage.removeItem("kharcha_refresh_token");
+      }
+    } catch {
+      // Ignore quota errors
+    }
+  }
+};
+
+export const getRefreshToken = (): string | null => {
+  if (typeof window !== "undefined") {
+    try {
+      return localStorage.getItem("kharcha_refresh_token");
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 export const getAppKey = (): string => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("kharcha_app_key") || "dev-shared-access-key-kharcha-pani";
@@ -96,23 +121,36 @@ export async function apiFetch<T>(
   let res = await fetch(url, fetchOptions);
 
   // Handle 401 Unauthorized with Automatic Silent Refresh
-  if (res.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh") && !endpoint.includes("/auth/register") && !endpoint.includes("/auth/google")) {
+  if (
+    res.status === 401 &&
+    !endpoint.includes("/auth/login") &&
+    !endpoint.includes("/auth/refresh") &&
+    !endpoint.includes("/auth/register") &&
+    !endpoint.includes("/auth/google")
+  ) {
     if (!isRefreshing) {
       isRefreshing = true;
 
       try {
         const refreshUrl = `${env.apiBaseUrl}/auth/refresh`;
+        const refreshBody = JSON.stringify({ refresh_token: getRefreshToken() });
         const refreshRes = await fetch(refreshUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          body: refreshBody,
         });
 
         if (refreshRes.ok) {
           const refreshData = await refreshRes.json();
           const newToken = refreshData?.data?.access_token;
+          const newRefreshToken = refreshData?.data?.refresh_token;
+
           if (newToken) {
             setAccessToken(newToken);
+            if (newRefreshToken) {
+              setRefreshToken(newRefreshToken);
+            }
             isRefreshing = false;
             onRefreshed(newToken);
 
@@ -125,9 +163,15 @@ export async function apiFetch<T>(
         } else {
           isRefreshing = false;
           setAccessToken(null);
+          setRefreshToken(null);
           if (typeof window !== "undefined") {
             const path = window.location.pathname;
-            if (!path.startsWith("/login") && !path.startsWith("/register") && !path.startsWith("/forgot-password") && !path.startsWith("/reset-password")) {
+            if (
+              !path.startsWith("/login") &&
+              !path.startsWith("/register") &&
+              !path.startsWith("/forgot-password") &&
+              !path.startsWith("/reset-password")
+            ) {
               window.location.href = "/login";
             }
           }
@@ -136,9 +180,15 @@ export async function apiFetch<T>(
       } catch (err) {
         isRefreshing = false;
         setAccessToken(null);
+        setRefreshToken(null);
         if (typeof window !== "undefined") {
           const path = window.location.pathname;
-          if (!path.startsWith("/login") && !path.startsWith("/register") && !path.startsWith("/forgot-password") && !path.startsWith("/reset-password")) {
+          if (
+            !path.startsWith("/login") &&
+            !path.startsWith("/register") &&
+            !path.startsWith("/forgot-password") &&
+            !path.startsWith("/reset-password")
+          ) {
             window.location.href = "/login";
           }
         }

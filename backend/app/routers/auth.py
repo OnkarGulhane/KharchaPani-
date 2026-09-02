@@ -11,6 +11,7 @@ from app.schemas.auth import (
     ForgotPasswordRequest,
     GoogleAuthRequest,
     LoginRequest,
+    RefreshTokenRequest,
     RefreshTokenResponse,
     RegisterRequest,
     ResetPasswordRequest,
@@ -29,31 +30,26 @@ REFRESH_COOKIE_MAX_AGE = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     """Set HttpOnly cookie for refresh token.
     
-    In production (cross-origin between Vercel and Render), SameSite must be 'none' with Secure=True.
-    In local development (localhost), SameSite='lax' with Secure=False.
+    Uses SameSite='none' with Secure=True so cross-origin requests from Vercel to Render work on Chrome.
     """
-    is_prod = settings.APP_ENV != "development"
-    samesite_val = "none" if is_prod else "lax"
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,
         max_age=REFRESH_COOKIE_MAX_AGE,
         httponly=True,
-        secure=is_prod,
-        samesite=samesite_val,
+        secure=True,
+        samesite="none",
         path="/",
     )
 
 
 def clear_refresh_cookie(response: Response) -> None:
     """Clear refresh token cookie."""
-    is_prod = settings.APP_ENV != "development"
-    samesite_val = "none" if is_prod else "lax"
     response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
         httponly=True,
-        secure=is_prod,
-        samesite=samesite_val,
+        secure=True,
+        samesite="none",
         path="/",
     )
 
@@ -74,6 +70,7 @@ async def register(
             access_token=access_token,
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             user=UserResponse.model_validate(user),
+            refresh_token=refresh_token,
         ),
         message="Account registered successfully",
     )
@@ -95,6 +92,7 @@ async def login(
             access_token=access_token,
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             user=UserResponse.model_validate(user),
+            refresh_token=refresh_token,
         ),
         message="Logged in successfully",
     )
@@ -116,6 +114,7 @@ async def google_auth(
             access_token=access_token,
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             user=UserResponse.model_validate(user),
+            refresh_token=refresh_token,
         ),
         message="Google authentication successful",
     )
@@ -125,11 +124,16 @@ async def google_auth(
 async def refresh_token(
     request: Request,
     response: Response,
+    body_data: Optional[RefreshTokenRequest] = None,
     kharcha_refresh_token: Optional[str] = Cookie(None, alias=REFRESH_COOKIE_NAME),
     db: AsyncSession = Depends(get_db),
 ):
-    """Rotate refresh token: validates cookie, revokes old token, issues new access token & refresh cookie."""
-    token_str = kharcha_refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
+    """Rotate refresh token: validates cookie or body token, issues new access token & refresh cookie."""
+    token_str = (
+        (body_data.refresh_token if body_data and body_data.refresh_token else None)
+        or kharcha_refresh_token
+        or request.cookies.get(REFRESH_COOKIE_NAME)
+    )
     if not token_str:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -143,6 +147,7 @@ async def refresh_token(
         data=RefreshTokenResponse(
             access_token=new_access_token,
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            refresh_token=new_refresh_token,
         ),
         message="Token refreshed successfully",
     )
@@ -152,11 +157,16 @@ async def refresh_token(
 async def logout(
     request: Request,
     response: Response,
+    body_data: Optional[RefreshTokenRequest] = None,
     kharcha_refresh_token: Optional[str] = Cookie(None, alias=REFRESH_COOKIE_NAME),
     db: AsyncSession = Depends(get_db),
 ):
     """Logout from current device: revokes refresh token in database and clears cookie."""
-    token_str = kharcha_refresh_token or request.cookies.get(REFRESH_COOKIE_NAME)
+    token_str = (
+        (body_data.refresh_token if body_data and body_data.refresh_token else None)
+        or kharcha_refresh_token
+        or request.cookies.get(REFRESH_COOKIE_NAME)
+    )
     if token_str:
         await AuthService.revoke_refresh_token(db, token_str)
 
