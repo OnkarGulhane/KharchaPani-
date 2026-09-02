@@ -324,11 +324,17 @@ export default function ExpenseForm({ isOpen, onClose, onSuccess, expenseToEdit 
                 ) : (
                   <select
                     {...register("category_id")}
-                    className="w-full bg-gray-900/80 border border-gray-700/80 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-slate-900/90 dark:bg-slate-900/90 light:bg-white border border-slate-700/80 dark:border-slate-700/80 light:border-slate-300 rounded-xl py-2.5 px-3.5 text-sm text-white dark:text-white light:text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
-                    <option value="">Select Category</option>
+                    <option value="" className="bg-slate-900 text-white dark:bg-slate-900 dark:text-white light:bg-white light:text-slate-900">
+                      {loadingCategories ? "Loading categories..." : "Select Category"}
+                    </option>
                     {categories.map((cat) => (
-                      <option key={cat.id} value={String(cat.id)}>
+                      <option
+                        key={cat.id}
+                        value={String(cat.id)}
+                        className="bg-slate-900 text-white dark:bg-slate-900 dark:text-white light:bg-white light:text-slate-900 py-1"
+                      >
                         {cat.name}
                       </option>
                     ))}

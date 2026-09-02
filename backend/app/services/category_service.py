@@ -10,7 +10,7 @@ from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryRespons
 class CategoryService:
     @staticmethod
     async def get_categories(db: AsyncSession, user_id: int = 1) -> List[CategoryResponse]:
-        """Fetch all categories with their associated expense count."""
+        """Fetch all categories with their associated expense count. Auto-seeds starter categories if empty."""
         expense_count_subq = (
             select(func.count(Expense.id))
             .where(Expense.category_id == Category.id)
@@ -24,6 +24,13 @@ class CategoryService:
         )
         result = await db.execute(stmt)
         rows = result.all()
+
+        # If user has no categories, auto-seed starter categories on the fly
+        if len(rows) == 0:
+            from app.seed.seed_categories import seed_user_starter_categories
+            await seed_user_starter_categories(db, user_id=user_id)
+            result = await db.execute(stmt)
+            rows = result.all()
 
         return [
             CategoryResponse(
