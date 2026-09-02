@@ -81,12 +81,17 @@ def upgrade() -> None:
             sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
             sa.Column('is_used', sa.Boolean(), nullable=False, server_default=sa.text('false')),
             sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.PrimaryKeyConstraint('id')
         )
         op.create_index(op.f('ix_password_reset_tokens_id'), 'password_reset_tokens', ['id'], unique=False)
         op.create_index(op.f('ix_password_reset_tokens_user_id'), 'password_reset_tokens', ['user_id'], unique=False)
         op.create_index(op.f('ix_password_reset_tokens_token_hash'), 'password_reset_tokens', ['token_hash'], unique=True)
+    else:
+        pr_columns = [c['name'] for c in inspector.get_columns('password_reset_tokens')]
+        if 'updated_at' not in pr_columns:
+            op.add_column('password_reset_tokens', sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')))
 
     # 4. email_verification_tokens table
     if 'email_verification_tokens' not in existing_tables:
@@ -98,12 +103,17 @@ def upgrade() -> None:
             sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
             sa.Column('is_used', sa.Boolean(), nullable=False, server_default=sa.text('false')),
             sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.PrimaryKeyConstraint('id')
         )
         op.create_index(op.f('ix_email_verification_tokens_id'), 'email_verification_tokens', ['id'], unique=False)
         op.create_index(op.f('ix_email_verification_tokens_user_id'), 'email_verification_tokens', ['user_id'], unique=False)
         op.create_index(op.f('ix_email_verification_tokens_token_hash'), 'email_verification_tokens', ['token_hash'], unique=True)
+    else:
+        ev_columns = [c['name'] for c in inspector.get_columns('email_verification_tokens')]
+        if 'updated_at' not in ev_columns:
+            op.add_column('email_verification_tokens', sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')))
 
 
 def downgrade() -> None:

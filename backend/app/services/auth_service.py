@@ -278,22 +278,26 @@ class AuthService:
         await db.commit()
 
     @staticmethod
-    async def create_email_verification_token(db: AsyncSession, user_id: int) -> str:
+    async def create_email_verification_token(db: AsyncSession, user_id: int) -> Optional[str]:
         """Generate a one-time email verification token (SHA-256 stored)."""
-        raw_token = generate_secure_token()
-        token_hash = hash_token(raw_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES)
+        try:
+            raw_token = generate_secure_token()
+            token_hash = hash_token(raw_token)
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES)
 
-        verification_record = EmailVerificationToken(
-            user_id=user_id,
-            token_hash=token_hash,
-            expires_at=expires_at,
-            is_used=False,
-        )
-        db.add(verification_record)
-        await db.commit()
-
-        return raw_token
+            verification_record = EmailVerificationToken(
+                user_id=user_id,
+                token_hash=token_hash,
+                expires_at=expires_at,
+                is_used=False,
+            )
+            db.add(verification_record)
+            await db.commit()
+            return raw_token
+        except Exception as e:
+            await db.rollback()
+            print(f"Warning: Failed to create email verification token: {e}")
+            return None
 
     @staticmethod
     async def verify_email(db: AsyncSession, raw_token: str) -> User:

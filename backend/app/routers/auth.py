@@ -73,12 +73,13 @@ async def register(
     # Generate email verification token and dispatch email in background
     try:
         verify_token = await AuthService.create_email_verification_token(db, user.id)
-        background_tasks.add_task(
-            EmailService.send_verification_email,
-            to_email=user.email,
-            verification_token=verify_token,
-            user_name=user.full_name,
-        )
+        if verify_token:
+            background_tasks.add_task(
+                EmailService.send_verification_email,
+                to_email=user.email,
+                verification_token=verify_token,
+                user_name=user.full_name,
+            )
     except Exception as exc:
         print(f"[Register] Background email verification notice: {exc}")
 

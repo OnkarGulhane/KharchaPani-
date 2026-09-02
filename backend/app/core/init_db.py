@@ -57,8 +57,18 @@ async def init_db() -> None:
                 await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45);"))
                 await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS is_revoked BOOLEAN DEFAULT FALSE;"))
                 await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMP WITH TIME ZONE;"))
+                await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
+                await conn.execute(text("ALTER TABLE refresh_tokens ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
 
-                # 3. Categories legacy unique constraint fix
+                # 3. Password reset tokens table
+                await conn.execute(text("ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
+                await conn.execute(text("ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
+
+                # 4. Email verification tokens table
+                await conn.execute(text("ALTER TABLE email_verification_tokens ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
+                await conn.execute(text("ALTER TABLE email_verification_tokens ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
+
+                # 5. Categories legacy unique constraint fix
                 await conn.execute(text("DROP INDEX IF EXISTS ix_categories_name;"))
                 await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS categories_name_key;"))
                 await conn.execute(text("ALTER TABLE categories DROP CONSTRAINT IF EXISTS uq_categories_name;"))
