@@ -59,13 +59,17 @@ export const GoogleSignInButton: React.FC = () => {
           // Clear existing children before rendering
           if (containerRef.current) {
             containerRef.current.innerHTML = "";
+            const computedWidth = containerRef.current.clientWidth
+              ? Math.min(Math.max(containerRef.current.clientWidth, 280), 380)
+              : 360;
+
             window.google.accounts.id.renderButton(containerRef.current, {
               theme: "filled_black",
               size: "large",
               type: "standard",
               shape: "rectangular",
               text: "continue_with",
-              width: 360,
+              width: computedWidth,
               logo_alignment: "left",
             });
           }
@@ -112,22 +116,22 @@ export const GoogleSignInButton: React.FC = () => {
   return (
     <div className="w-full flex flex-col items-center justify-center min-h-[44px]">
       {loading ? (
-        <div className="w-full h-11 sm:h-12 flex items-center justify-center px-4 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 text-sm font-medium shadow-sm">
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-400 mr-2" />
-          <span>Signing you in...</span>
+        <div className="w-full max-w-[380px] h-11 sm:h-12 flex items-center justify-center px-4 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-200 text-sm font-medium shadow-sm">
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-400 mr-2.5" />
+          <span>Authenticating with Google...</span>
         </div>
       ) : (
         <div
           ref={containerRef}
           className={`w-full flex justify-center transition-opacity duration-200 ${
-            gsiReady ? "opacity-100 min-h-[44px]" : "opacity-0 h-0"
+            gsiReady ? "opacity-100 min-h-[44px]" : "opacity-0 h-0 pointer-events-none"
           }`}
         />
       )}
 
       {!gsiReady && !loading && (
-        <div className="w-full h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-700/80 bg-slate-800/40 text-slate-400 text-sm font-medium animate-pulse">
-          <svg className="w-5 h-5 flex-shrink-0 opacity-60" viewBox="0 0 24 24">
+        <div className="w-full max-w-[380px] h-11 sm:h-12 flex items-center justify-center gap-3 px-4 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-300 text-sm font-medium shadow-sm animate-pulse">
+          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -145,7 +149,7 @@ export const GoogleSignInButton: React.FC = () => {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Loading Google Sign-In...</span>
+          <span className="text-xs font-semibold">Continue with Google</span>
         </div>
       )}
     </div>

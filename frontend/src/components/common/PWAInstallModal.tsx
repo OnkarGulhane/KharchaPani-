@@ -44,7 +44,7 @@ export default function PWAInstallModal() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(currentUrl);
     setCopied(true);
-    toast.success("मोबाईल लिंक कॉपी केली! (Link copied)");
+    toast.success("Mobile link copied to clipboard!");
     setTimeout(() => setCopied(false), 2500);
   };
 
@@ -79,8 +79,8 @@ export default function PWAInstallModal() {
                 <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-sm sm:text-base text-white">Kharcha Pani ॲप इन्स्टॉल</h3>
-                <p className="text-[11px] sm:text-xs text-emerald-400 font-medium">मोबाईल & डेस्कटॉप PWA</p>
+                <h3 className="font-bold text-sm sm:text-base text-white">Install Kharcha Pani</h3>
+                <p className="text-[11px] sm:text-xs text-emerald-400 font-medium">Mobile & Desktop Progressive Web App</p>
               </div>
             </div>
             <button
@@ -113,7 +113,7 @@ export default function PWAInstallModal() {
               }`}
             >
               <QrCode className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>QR स्कॅन</span>
+              <span>Scan QR</span>
             </button>
             <button
               onClick={() => setActiveTab("ios")}
@@ -124,7 +124,7 @@ export default function PWAInstallModal() {
               }`}
             >
               <Share className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>iPhone</span>
+              <span>iPhone / iOS</span>
             </button>
           </div>
 
@@ -134,42 +134,42 @@ export default function PWAInstallModal() {
               <div className="space-y-2.5 bg-gray-900/60 p-3.5 rounded-2xl border border-gray-800 text-xs">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5">
-                    १
+                    1
                   </div>
                   <div>
                     <p className="font-semibold text-white flex items-center gap-1">
-                      खालील <span className="text-emerald-400 font-bold">'इन्स्टॉल करा'</span> बटणावर दाबा
+                      Click the <span className="text-emerald-400 font-bold">'Install App'</span> button below
                     </p>
                     <p className="text-gray-400 text-[11px]">
-                      ब्राउझरचा अधिकृत Install डायलॉग लगेच ओपन होईल.
+                      The official browser install prompt will appear instantly.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5">
-                    २
+                    2
                   </div>
                   <div>
                     <p className="font-semibold text-white flex items-center gap-1">
-                      किंवा Chrome मध्ये वर ३ डॉट्स <MoreVertical className="w-3 h-3 text-emerald-400 inline" /> दाबा
+                      Or tap Chrome menu <MoreVertical className="w-3 h-3 text-emerald-400 inline" />
                     </p>
                     <p className="text-gray-400 text-[11px]">
-                      मेनूमधून <span className="text-white font-medium">'Install app'</span> किंवा <span className="text-white font-medium">'Add to Home screen'</span> निवडा.
+                      Select <span className="text-white font-medium">'Install app'</span> or <span className="text-white font-medium">'Add to Home screen'</span>.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5">
-                    ३
+                    3
                   </div>
                   <div>
                     <p className="font-semibold text-white">
-                      'Install' कन्फर्म करा
+                      Confirm 'Install'
                     </p>
                     <p className="text-gray-400 text-[11px]">
-                      ॲप तुमच्या फोनच्या स्क्रीनवर ॲप म्हणून सुरू होईल.
+                      Kharcha Pani will launch as a fast standalone app on your home screen.
                     </p>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export default function PWAInstallModal() {
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold text-sm shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 active:scale-98 transition-all"
               >
                 <Download className="w-4 h-4" />
-                <span>आत्ताच ॲप इन्स्टॉल करा (Install Now)</span>
+                <span>Install Now</span>
               </button>
             </div>
           )}
@@ -191,7 +191,7 @@ export default function PWAInstallModal() {
           {activeTab === "qr" && (
             <div className="py-4 space-y-3 text-center">
               <p className="text-xs text-gray-300">
-                तुमच्या मोबाईलच्या कॅमेऱ्याने खालील QR कोड स्कॅन करा आणि लिंक उघडा:
+                Scan this QR code with your phone camera to open Kharcha Pani:
               </p>
 
               {/* QR Code Container */}
@@ -223,7 +223,7 @@ export default function PWAInstallModal() {
               </div>
 
               <p className="text-[11px] text-gray-400">
-                (तुमचा फोन आणि कॉम्प्युटर एकाच Wi-Fi नेटवर्कवर असायला हवेत)
+                (Ensure your phone and computer are on the same Wi-Fi network)
               </p>
             </div>
           )}
@@ -234,42 +234,42 @@ export default function PWAInstallModal() {
               <div className="space-y-2.5 bg-gray-900/60 p-3.5 rounded-2xl border border-gray-800 text-xs">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5">
-                    १
+                    1
                   </div>
                   <div>
                     <p className="font-semibold text-white flex items-center gap-1">
-                      खालचे Share <Share className="w-3 h-3 text-blue-400 inline" /> बटण दाबा
+                      Tap the Share <Share className="w-3 h-3 text-blue-400 inline" /> button
                     </p>
                     <p className="text-gray-400 text-[11px]">
-                      iPhone Safari मधील खालील Share आयकॉनवर टॅप करा.
+                      Tap the Share icon at the bottom of Safari on your iPhone.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5">
-                    २
+                    2
                   </div>
                   <div>
                     <p className="font-semibold text-white flex items-center gap-1">
-                      <PlusSquare className="w-3.5 h-3.5 text-emerald-400 inline" /> 'Add to Home Screen' निवडा
+                      <PlusSquare className="w-3.5 h-3.5 text-emerald-400 inline" /> Select 'Add to Home Screen'
                     </p>
                     <p className="text-gray-400 text-[11px]">
-                      खाली स्क्रोल करून Home Screen वर जोडा हा पर्याय निवडा.
+                      Scroll down in the share sheet and tap Add to Home Screen.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5">
-                    ३
+                    3
                   </div>
                   <div>
                     <p className="font-semibold text-white flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 inline" /> वर 'Add' दाबा
+                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 inline" /> Tap 'Add' in top right
                     </p>
                     <p className="text-gray-400 text-[11px]">
-                      ॲप थेट तुमच्या iPhone च्या होम स्क्रीनवर सेव्ह होईल.
+                      The app will be installed directly to your iPhone home screen.
                     </p>
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function PWAInstallModal() {
               onClick={() => setShowInstallModal(false)}
               className="text-xs text-gray-400 hover:text-white transition-colors"
             >
-              बंद करा (Close)
+              Close
             </button>
           </div>
         </motion.div>

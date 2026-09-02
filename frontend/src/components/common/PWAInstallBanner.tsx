@@ -38,14 +38,14 @@ export default function PWAInstallBanner() {
             <div className="flex-1 min-w-0 pr-5">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <h4 className="text-sm font-bold text-white tracking-tight">
-                  मोबाईल ॲप इन्स्टॉल करा
+                  Install Kharcha Pani
                 </h4>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wide">
-                  <Sparkles className="w-2.5 h-2.5 mr-0.5" /> PWA
+                  <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Fast App
                 </span>
               </div>
               <p className="text-xs text-gray-300">
-                ब्राउझरशिवाय डायरेक्ट फोनच्या स्क्रीनवरून ॲपसारखे वापरा.
+                Install on your device for instant offline access and quick expense tracking.
               </p>
 
               {/* Actions */}
@@ -62,7 +62,7 @@ export default function PWAInstallBanner() {
                   onClick={dismissBanner}
                   className="px-2.5 py-2 rounded-xl bg-gray-800/80 hover:bg-gray-700 text-gray-300 text-xs font-medium transition-colors"
                 >
-                  नंतर
+                  Later
                 </button>
               </div>
             </div>
