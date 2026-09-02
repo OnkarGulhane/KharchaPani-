@@ -35,7 +35,27 @@ class GoogleAuthService:
         is_jwt_id_token = token_str.startswith("ey") and token_str.count(".") == 2
 
         if is_jwt_id_token:
-            # Cryptographically verify ID token in worker thread so event loop is not blocked
+            # 1. First attempt: Direct HTTP tokeninfo endpoint (fastest async path, 50ms)
+            try:
+                client = get_google_http_client()
+                res = await client.get(
+                    "https://oauth2.googleapis.com/tokeninfo",
+                    params={"id_token": token_str},
+                )
+                if res.status_code == 200:
+                    token_info = res.json()
+                    email = token_info.get("email")
+                    if email:
+                        return {
+                            "google_id": token_info.get("sub"),
+                            "email": email.lower(),
+                            "full_name": token_info.get("name") or email.split("@")[0],
+                            "picture": token_info.get("picture"),
+                        }
+            except Exception:
+                pass
+
+            # 2. Cryptographically verify ID token in worker thread
             try:
                 def _verify():
                     return id_token.verify_oauth2_token(
@@ -58,7 +78,7 @@ class GoogleAuthService:
             except Exception:
                 pass
 
-        # Fast Path for OAuth2 Access Tokens: Verify with Google UserInfo API using persistent async client
+        # 3. Fast Path for OAuth2 Access Tokens: Verify with Google UserInfo API using persistent async client
         try:
             client = get_google_http_client()
             res = await client.get(
@@ -78,7 +98,7 @@ class GoogleAuthService:
         except Exception:
             pass
 
-        # Fallback for non-standard tokens
+        # 4. Fallback for non-standard JWT tokens
         if not is_jwt_id_token and token_str.count(".") == 2:
             try:
                 def _verify_fallback():

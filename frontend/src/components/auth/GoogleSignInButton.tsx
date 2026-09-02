@@ -89,6 +89,11 @@ export const GoogleSignInButton: React.FC = () => {
   const handleGoogleSignIn = useCallback(() => {
     if (loading) return;
 
+    // Safety timeout: automatically reset loading state after 15s if popup is dismissed
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 15000);
+
     // Primary: Google GSI Token Client popup
     if (tokenClientRef.current) {
       try {
@@ -96,6 +101,7 @@ export const GoogleSignInButton: React.FC = () => {
         tokenClientRef.current.requestAccessToken({ prompt: "select_account" });
         return;
       } catch (e) {
+        clearTimeout(safetyTimer);
         console.warn("Token client request failed, using redirect fallback:", e);
       }
     }
@@ -118,6 +124,7 @@ export const GoogleSignInButton: React.FC = () => {
 
       window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
     } catch (err: any) {
+      clearTimeout(safetyTimer);
       setLoading(false);
       toast.error("Failed to initiate Google sign in", {
         description: err?.message || "Please check your network connection.",

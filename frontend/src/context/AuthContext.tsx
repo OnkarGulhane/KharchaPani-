@@ -40,31 +40,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  // Initial silent auth check on mount
+  // Initial silent auth check on mount (optimized for sub-200ms load)
   useEffect(() => {
     let isMounted = true;
 
     const initAuth = async () => {
       try {
-        // Fast path: Check if we have an active access token in session
-        try {
-          const userData = await authApi.getMe();
-          if (isMounted) {
-            setUser(userData);
-            setIsLoading(false);
-            return;
+        const storedToken = typeof window !== "undefined" ? sessionStorage.getItem("kharcha_access_token") : null;
+
+        // If we have an access token stored, verify it directly
+        if (storedToken) {
+          try {
+            setAccessToken(storedToken);
+            setAccessTokenState(storedToken);
+            const userData = await authApi.getMe();
+            if (isMounted) {
+              setUser(userData);
+              setIsLoading(false);
+              return;
+            }
+          } catch {
+            // Access token expired, attempt refresh below
           }
-        } catch {
-          // Access token expired or missing, proceed to silent refresh
         }
 
-        const refreshData = await authApi.refresh();
-        if (refreshData?.access_token && isMounted) {
-          setAccessToken(refreshData.access_token);
-          setAccessTokenState(refreshData.access_token);
-          const userData = await authApi.getMe();
+        // Silent refresh attempt via HttpOnly cookie
+        try {
+          const refreshData = await authApi.refresh();
+          if (refreshData?.access_token && isMounted) {
+            setAccessToken(refreshData.access_token);
+            setAccessTokenState(refreshData.access_token);
+            const userData = await authApi.getMe();
+            if (isMounted) {
+              setUser(userData);
+            }
+          }
+        } catch {
           if (isMounted) {
-            setUser(userData);
+            handleClearSession();
           }
         }
       } catch (err) {

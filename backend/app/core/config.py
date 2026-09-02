@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 24
 
     # Google OAuth 2.0 (Phase 2)
-    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_ID: str = "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com"
     GOOGLE_CLIENT_SECRET: str = ""
 
     # Server port
