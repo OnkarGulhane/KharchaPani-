@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { env } from "@/config/env";
 import { Loader2 } from "lucide-react";
@@ -16,12 +16,13 @@ export const GoogleSignInButton: React.FC = () => {
   const { googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>("Connecting to Google...");
+  const tokenClientRef = useRef<any>(null);
 
   const clientId =
     env.googleClientId ||
     "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
 
-  // Pre-warm Render backend service on mount to eliminate cold-start lag
+  // 1. Pre-warm Render backend service on mount
   useEffect(() => {
     try {
       const healthUrl = `${env.apiBaseUrl.replace(/\/api\/v1\/?$/, "")}/health`;
@@ -29,76 +30,136 @@ export const GoogleSignInButton: React.FC = () => {
     } catch {}
   }, []);
 
+  // 2. Pre-initialize Token Client immediately so it is 100% ready for user clicks
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let isMounted = true;
+
+    const setupClient = () => {
+      if (!isMounted) return;
+      if (window.google?.accounts?.oauth2) {
+        try {
+          tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: "openid email profile",
+            callback: async (response: any) => {
+              if (!isMounted) return;
+              if (response?.access_token) {
+                setLoading(true);
+                setLoadingStep("Signing you in securely...");
+                try {
+                  await googleLogin(response.access_token);
+                } catch (err: any) {
+                  console.error("Google Auth error:", err);
+                  toast.error("Google Sign-In failed", {
+                    description: err?.message || "Authentication failed. Please try again.",
+                  });
+                } finally {
+                  if (isMounted) setLoading(false);
+                }
+              } else if (response?.error) {
+                if (isMounted) setLoading(false);
+                if (response.error !== "popup_closed_by_user") {
+                  toast.error("Google Sign-In was cancelled or failed", {
+                    description: response.error_description || response.error,
+                  });
+                }
+              } else {
+                if (isMounted) setLoading(false);
+              }
+            },
+            error_callback: (err: any) => {
+              if (!isMounted) return;
+              setLoading(false);
+              console.warn("Google OAuth popup blocked by browser:", err);
+              if (err?.type === "popup_failed_to_open" || err?.type === "popup_closed") {
+                toast.error("Google popup was blocked by Chrome", {
+                  description:
+                    "Please click the popup icon in your Chrome address bar (URL bar) and select 'Always allow popups' for this site.",
+                  duration: 6000,
+                });
+              }
+            },
+          });
+        } catch (e) {
+          console.warn("Token client initialization warning:", e);
+        }
+      }
+    };
+
+    if (window.google?.accounts?.oauth2) {
+      setupClient();
+    } else {
+      const scriptId = "google-gsi-client-script";
+      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = setupClient;
+        document.body.appendChild(script);
+      } else {
+        script.addEventListener("load", setupClient);
+      }
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [clientId, googleLogin]);
+
+  // Direct synchronous user-gesture handler (Zero asynchronous delay before requestAccessToken)
   const handleGoogleSignIn = useCallback(() => {
     if (loading) return;
 
-    if (typeof window === "undefined" || !window.google?.accounts?.oauth2) {
-      toast.info("Google Authentication is preparing...", {
-        description: "Please click again in a moment.",
-      });
+    // Direct invocation on the pre-initialized token client
+    if (tokenClientRef.current) {
+      setLoading(true);
+      setLoadingStep("Opening Google account chooser...");
+
+      // Call requestAccessToken as the very first synchronous operation
+      tokenClientRef.current.requestAccessToken({ prompt: "select_account" });
       return;
     }
 
-    setLoading(true);
-    setLoadingStep("Opening Google account chooser...");
-
-    const safetyTimer = setTimeout(() => {
-      setLoading(false);
-    }, 25000);
-
-    try {
-      // Initialize Token Client directly in user gesture stack
-      const tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "openid email profile",
-        callback: async (response: any) => {
-          clearTimeout(safetyTimer);
-          if (response?.access_token) {
-            setLoading(true);
-            setLoadingStep("Signing you in securely...");
-            try {
-              await googleLogin(response.access_token);
-            } catch (err: any) {
-              console.error("Google Auth error:", err);
-              toast.error("Google Sign-In failed", {
-                description: err?.message || "Authentication failed. Please try again.",
-              });
-            } finally {
+    // Fallback if user clicked in the first few milliseconds before SDK loaded
+    if (window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: "openid email profile",
+          callback: async (response: any) => {
+            if (response?.access_token) {
+              setLoadingStep("Signing you in...");
+              try {
+                await googleLogin(response.access_token);
+              } catch (err: any) {
+                toast.error("Google Sign-In failed", {
+                  description: err?.message || "Authentication failed.",
+                });
+              } finally {
+                setLoading(false);
+              }
+            } else {
               setLoading(false);
             }
-          } else if (response?.error) {
-            setLoading(false);
-            if (response.error !== "popup_closed_by_user") {
-              toast.error("Google Sign-In error", {
-                description: response.error_description || response.error,
-              });
-            }
-          } else {
-            setLoading(false);
-          }
-        },
-        error_callback: (err: any) => {
-          clearTimeout(safetyTimer);
-          setLoading(false);
-          console.warn("Google token client error:", err);
-          if (err?.type === "popup_failed_to_open" || err?.type === "popup_closed") {
-            toast.error("Google popup was blocked by browser", {
-              description: "Please enable popups for this site or try logging in with email.",
-            });
-          }
-        },
-      });
-
-      // Synchronous requestAccessToken within user click handler (Chrome User Gesture compliant)
-      tokenClient.requestAccessToken({ prompt: "select_account" });
-    } catch (err: any) {
-      clearTimeout(safetyTimer);
-      setLoading(false);
-      console.error("Token client execution error:", err);
-      toast.error("Could not start Google Sign-In", {
-        description: err?.message || "Please check your browser settings and try again.",
-      });
+          },
+        });
+        tokenClientRef.current = client;
+        setLoading(true);
+        client.requestAccessToken({ prompt: "select_account" });
+        return;
+      } catch (e) {
+        setLoading(false);
+      }
     }
+
+    toast.info("Google Authentication is preparing...", {
+      description: "Please click again in a moment.",
+    });
   }, [clientId, googleLogin, loading]);
 
   return (
