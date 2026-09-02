@@ -54,6 +54,21 @@ app.add_middleware(
 # Health router (unprotected)
 app.include_router(health.router)
 
+# Global exception handler for actionable error diagnostics
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    print(f"Unhandled Exception on {request.url.path}: {exc}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "error": "InternalServerError",
+            "detail": str(exc),
+        },
+    )
+
 # API Routers under /api/v1
 api_v1_prefix = settings.API_V1_PREFIX
 app.include_router(auth.router, prefix=api_v1_prefix)
