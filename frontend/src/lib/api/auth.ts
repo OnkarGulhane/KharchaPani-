@@ -1,14 +1,34 @@
 import { apiFetch, setAccessToken } from "@/lib/api/client";
 import { RefreshTokenResponse, TokenResponse, User } from "@/types/auth";
 
+export interface RegisterResult {
+  id: number;
+  email: string;
+  full_name: string;
+  is_verified: boolean;
+  requires_verification: boolean;
+}
+
 export const authApi = {
-  register: async (data: { email: string; password: string; full_name: string }): Promise<TokenResponse> => {
-    const res = await apiFetch<TokenResponse>("/auth/register", {
+  register: async (data: { email: string; password: string; full_name: string }): Promise<RegisterResult> => {
+    return apiFetch<RegisterResult>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    setAccessToken(res.access_token);
-    return res;
+  },
+
+  verifyEmail: async (token: string): Promise<{ verified: boolean; email: string }> => {
+    return apiFetch<{ verified: boolean; email: string }>("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  resendVerification: async (email: string): Promise<{ sent: boolean }> => {
+    return apiFetch<{ sent: boolean }>("/auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
   },
 
   login: async (data: { email: string; password: string }): Promise<TokenResponse> => {

@@ -9,6 +9,14 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=150)
 
 
+class RegisterResponse(BaseModel):
+    id: int
+    email: EmailStr
+    full_name: str
+    is_verified: bool = False
+    requires_verification: bool = True
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=1)

@@ -15,6 +15,7 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     RefreshTokenResponse,
     RegisterRequest,
+    RegisterResponse,
     ResendVerificationRequest,
     ResetPasswordRequest,
     TokenResponse,
@@ -58,17 +59,14 @@ def clear_refresh_cookie(response: Response) -> None:
     )
 
 
-@router.post("/register", response_model=APIResponse[TokenResponse], status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=APIResponse[RegisterResponse], status_code=status.HTTP_201_CREATED)
 async def register(
     data: RegisterRequest,
-    request: Request,
-    response: Response,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
-    """Register a new user, seed starter categories, send verification email, and issue JWT session."""
-    user, access_token, refresh_token = await AuthService.register_user(db, data, request)
-    set_refresh_cookie(response, refresh_token)
+    """Register a new user with is_verified=False and dispatch verification email."""
+    user = await AuthService.register_user(db, data)
 
     # Generate email verification token and dispatch email in background
     try:
@@ -84,13 +82,14 @@ async def register(
         print(f"[Register] Background email verification notice: {exc}")
 
     return APIResponse(
-        data=TokenResponse(
-            access_token=access_token,
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=UserResponse.model_validate(user),
-            refresh_token=refresh_token,
+        data=RegisterResponse(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            is_verified=user.is_verified,
+            requires_verification=True,
         ),
-        message="Account registered successfully. Please check your email to verify your account.",
+        message="Registration successful! Please check your email to verify your account before logging in.",
     )
 
 

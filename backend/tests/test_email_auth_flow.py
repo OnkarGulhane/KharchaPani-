@@ -22,24 +22,29 @@ async def test_registration_and_email_verification_flow(
     }
     reg_res = await async_client.post("/api/v1/auth/register", json=register_payload)
     assert reg_res.status_code == 201
-    user_data = reg_res.json()["data"]["user"]
+    user_data = reg_res.json()["data"]
     assert user_data["email"] == "verifyuser@example.com"
+    assert user_data["is_verified"] is False
+    assert user_data["requires_verification"] is True
 
-    # Verify user is initially unverified
+    # Attempt login BEFORE verification (must be rejected with 403)
+    login_before = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": "verifyuser@example.com", "password": "SecurePass123!"},
+    )
+    assert login_before.status_code == 403
+    assert "verify your email" in login_before.json()["detail"].lower()
+
+    # Verify user is in DB as unverified
     stmt = select(User).where(User.email == "verifyuser@example.com")
     res = await db_session.execute(stmt)
     user_in_db = res.scalar_one()
     assert user_in_db.is_verified is False
 
-    # 2. Get generated verification token from DB
-    stmt_token = select(EmailVerificationToken).where(EmailVerificationToken.user_id == user_in_db.id)
-    res_token = await db_session.execute(stmt_token)
-    token_record = res_token.scalar_one()
-    assert token_record.is_used is False
-
-    # We need a raw token to verify. Let's create one directly via AuthService to test the endpoint
+    # 2. Generate raw token and test verification endpoint
     from app.services.auth_service import AuthService
     raw_token = await AuthService.create_email_verification_token(db_session, user_in_db.id)
+    assert raw_token is not None
 
     # 3. Call POST /api/v1/auth/verify-email
     verify_res = await async_client.post(
@@ -53,6 +58,15 @@ async def test_registration_and_email_verification_flow(
     # 4. Check user in DB is now verified
     await db_session.refresh(user_in_db)
     assert user_in_db.is_verified is True
+
+    # 5. Attempt login AFTER verification (must succeed with 200)
+    login_after = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": "verifyuser@example.com", "password": "SecurePass123!"},
+    )
+    assert login_after.status_code == 200
+    assert login_after.json()["success"] is True
+    assert "access_token" in login_after.json()["data"]
 
 
 @pytest.mark.asyncio

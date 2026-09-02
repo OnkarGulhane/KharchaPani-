@@ -64,9 +64,8 @@ class AuthService:
     async def register_user(
         db: AsyncSession,
         data: RegisterRequest,
-        request: Optional[Request] = None,
-    ) -> Tuple[User, str, str]:
-        """Register a new user, seed starter categories, and issue tokens."""
+    ) -> User:
+        """Register a new user with is_verified=False and seed starter categories."""
         email_clean = data.email.strip().lower()
 
         # Check existing email
@@ -95,10 +94,7 @@ class AuthService:
         # Automatically seed starter categories for the new user
         await seed_user_starter_categories(db, user_id=new_user.id)
 
-        # Issue session tokens
-        access_token, refresh_token = await AuthService.create_user_session(db, new_user, request)
-
-        return new_user, access_token, refresh_token
+        return new_user
 
     @staticmethod
     async def login_user(
@@ -107,7 +103,7 @@ class AuthService:
         password: str,
         request: Optional[Request] = None,
     ) -> Tuple[User, str, str]:
-        """Validate email/password and issue session tokens."""
+        """Validate email/password, verify email activation, and issue session tokens."""
         email_clean = email.strip().lower()
 
         stmt = select(User).where(User.email == email_clean)
@@ -130,6 +126,12 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Account is deactivated. Please contact support.",
+            )
+
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please verify your email address before logging in. Check your inbox for the verification link.",
             )
 
         access_token, refresh_token = await AuthService.create_user_session(db, user, request)

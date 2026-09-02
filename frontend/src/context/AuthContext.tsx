@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authApi } from "@/lib/api/auth";
+import { authApi, RegisterResult } from "@/lib/api/auth";
 import { setAccessToken, setRefreshToken, getRefreshToken } from "@/lib/api/client";
 import { User } from "@/types/auth";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (fullName: string, email: string, password: string) => Promise<void>;
+  register: (fullName: string, email: string, password: string) => Promise<RegisterResult>;
   googleLogin: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (fullName: string, email: string, password: string) => {
+  const register = async (fullName: string, email: string, password: string): Promise<RegisterResult> => {
     setIsLoading(true);
     try {
       const res = await authApi.register({
@@ -132,11 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
       });
-      handleSetSession(res.access_token, res.user, res.refresh_token);
-      toast.success("Account created successfully!", {
-        description: `Welcome to Kharcha Pani, ${res.user.full_name}`,
+      toast.success("Registration successful!", {
+        description: "Please check your email to verify your account before logging in.",
       });
-      router.push("/");
+      return res;
     } catch (err: any) {
       toast.error("Registration failed", {
         description: err.message || "Failed to create account",

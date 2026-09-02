@@ -9,6 +9,8 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { registerSchema, RegisterFormValues } from "@/lib/validations/authSchema";
 import { useAuth } from "@/context/AuthContext";
+import { authApi } from "@/lib/api/auth";
+import { toast } from "sonner";
 import {
   User,
   Mail,
@@ -19,6 +21,8 @@ import {
   ArrowRight,
   Check,
   X,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -27,6 +31,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -65,13 +71,112 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      await registerUser(data.full_name, data.email, data.password);
+      const res = await registerUser(data.full_name, data.email, data.password);
+      setRegisteredEmail(data.email);
     } catch {
-      // Handled in AuthContext with toast
+      // Error handled in AuthContext with toast
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleResendVerification = async () => {
+    if (!registeredEmail || isResending) return;
+    setIsResending(true);
+    try {
+      await authApi.resendVerification(registeredEmail);
+      toast.success("Verification email resent!", {
+        description: `We sent a new link to ${registeredEmail}`,
+      });
+    } catch (err: any) {
+      toast.error("Failed to resend email", {
+        description: err.message || "Please try again later.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // If successfully registered, show the Verification Requirement screen
+  if (registeredEmail) {
+    return (
+      <AuthCard
+        maxWidth="md"
+        title="Verify Your Email"
+        subtitle="We've sent a verification link to activate your account."
+        footer={
+          <p className="text-slate-400 dark:text-slate-400 light:text-slate-600 text-center">
+            Ready to sign in?{" "}
+            <Link
+              href="/login"
+              className="text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-semibold hover:text-emerald-300 dark:hover:text-emerald-300 light:hover:text-emerald-700 transition-colors inline-flex items-center gap-1 group ml-1"
+            >
+              <span>Go to Sign in</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </p>
+        }
+      >
+        <div className="space-y-6 text-center py-2">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10 animate-bounce">
+            <Mail className="w-8 h-8 text-emerald-400" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">
+              Check your inbox
+            </h3>
+            <p className="text-sm text-slate-400 dark:text-slate-400 light:text-slate-600 leading-relaxed max-w-sm mx-auto">
+              We sent a verification link to{" "}
+              <span className="font-semibold text-emerald-400 dark:text-emerald-400 light:text-emerald-600 break-all">
+                {registeredEmail}
+              </span>
+              . Click the link to activate your account.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900/60 dark:bg-slate-900/60 light:bg-slate-50 border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 text-left space-y-1.5">
+            <div className="flex items-center gap-2 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-medium">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>Link expires in 30 minutes</span>
+            </div>
+            <p className="text-[11px] pl-6 text-slate-500">
+              Can't find it? Make sure to check your Spam or Junk folder.
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={isResending}
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 font-semibold text-sm transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+            >
+              {isResending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                  <span>Resending email...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 text-slate-400" />
+                  <span>Resend verification email</span>
+                </>
+              )}
+            </button>
+
+            <Link
+              href="/login"
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 transition-all"
+            >
+              <span>Sign In with Verified Account</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </AuthCard>
+    );
+  }
 
   return (
     <AuthCard

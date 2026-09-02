@@ -13,7 +13,8 @@ async def test_user_data_isolation_expenses(async_client: httpx.AsyncClient):
         json={"email": "usera@example.com", "password": "Password123!", "full_name": "User A"},
     )
     assert reg_a.status_code == 201
-    token_a = reg_a.json()["data"]["access_token"]
+    user_a_id = reg_a.json()["data"]["id"]
+    token_a = create_access_token(data={"sub": str(user_a_id), "email": "usera@example.com"})
     headers_a = {"Authorization": f"Bearer {token_a}"}
 
     reg_b = await async_client.post(
@@ -21,7 +22,8 @@ async def test_user_data_isolation_expenses(async_client: httpx.AsyncClient):
         json={"email": "userb@example.com", "password": "Password123!", "full_name": "User B"},
     )
     assert reg_b.status_code == 201
-    token_b = reg_b.json()["data"]["access_token"]
+    user_b_id = reg_b.json()["data"]["id"]
+    token_b = create_access_token(data={"sub": str(user_b_id), "email": "userb@example.com"})
     headers_b = {"Authorization": f"Bearer {token_b}"}
 
     # 2. Get User A's category ID
@@ -76,13 +78,15 @@ async def test_category_composite_unique_per_user(async_client: httpx.AsyncClien
         "/api/v1/auth/register",
         json={"email": "alice@example.com", "password": "Password123!", "full_name": "Alice"},
     )
-    headers_a = {"Authorization": f"Bearer {reg_a.json()['data']['access_token']}"}
+    token_a = create_access_token(data={"sub": str(reg_a.json()["data"]["id"]), "email": "alice@example.com"})
+    headers_a = {"Authorization": f"Bearer {token_a}"}
 
     reg_b = await async_client.post(
         "/api/v1/auth/register",
         json={"email": "bob@example.com", "password": "Password123!", "full_name": "Bob"},
     )
-    headers_b = {"Authorization": f"Bearer {reg_b.json()['data']['access_token']}"}
+    token_b = create_access_token(data={"sub": str(reg_b.json()["data"]["id"]), "email": "bob@example.com"})
+    headers_b = {"Authorization": f"Bearer {token_b}"}
 
     # Alice creates custom category "Crypto Investment"
     res_a = await async_client.post(
@@ -110,13 +114,15 @@ async def test_dashboard_isolation(async_client: httpx.AsyncClient):
         "/api/v1/auth/register",
         json={"email": "carol@example.com", "password": "Password123!", "full_name": "Carol"},
     )
-    headers_a = {"Authorization": f"Bearer {reg_a.json()['data']['access_token']}"}
+    token_a = create_access_token(data={"sub": str(reg_a.json()["data"]["id"]), "email": "carol@example.com"})
+    headers_a = {"Authorization": f"Bearer {token_a}"}
 
     reg_b = await async_client.post(
         "/api/v1/auth/register",
         json={"email": "dave@example.com", "password": "Password123!", "full_name": "Dave"},
     )
-    headers_b = {"Authorization": f"Bearer {reg_b.json()['data']['access_token']}"}
+    token_b = create_access_token(data={"sub": str(reg_b.json()["data"]["id"]), "email": "dave@example.com"})
+    headers_b = {"Authorization": f"Bearer {token_b}"}
 
     # Carol logs an expense
     cats_a = await async_client.get("/api/v1/categories", headers=headers_a)

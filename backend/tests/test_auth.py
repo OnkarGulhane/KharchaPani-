@@ -4,7 +4,7 @@ import httpx
 
 @pytest.mark.asyncio
 async def test_register_user_success(async_client: httpx.AsyncClient):
-    """Test user registration issues tokens and seeds starter categories."""
+    """Test user registration creates unverified account and requires email verification."""
     payload = {
         "email": "newuser@example.com",
         "password": "SecurePassword123!",
@@ -14,9 +14,10 @@ async def test_register_user_success(async_client: httpx.AsyncClient):
     assert response.status_code == 201
     data = response.json()
     assert data["success"] is True
-    assert "access_token" in data["data"]
-    assert data["data"]["user"]["email"] == "newuser@example.com"
-    assert "kharcha_refresh_token" in response.cookies
+    assert data["data"]["email"] == "newuser@example.com"
+    assert data["data"]["is_verified"] is False
+    assert data["data"]["requires_verification"] is True
+    assert "verify" in data["message"].lower()
 
 
 @pytest.mark.asyncio
