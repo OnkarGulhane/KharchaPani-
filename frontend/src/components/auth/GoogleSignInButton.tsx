@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { env } from "@/config/env";
 import { Loader2 } from "lucide-react";
@@ -16,13 +16,12 @@ export const GoogleSignInButton: React.FC = () => {
   const { googleLogin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>("Connecting to Google...");
-  const tokenClientRef = useRef<any>(null);
 
   const clientId =
     env.googleClientId ||
     "604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com";
 
-  // 1. Pre-warm Render backend service on mount
+  // Pre-warm Render backend service on mount to eliminate cold-start lag
   useEffect(() => {
     try {
       const healthUrl = `${env.apiBaseUrl.replace(/\/api\/v1\/?$/, "")}/health`;
@@ -30,188 +29,76 @@ export const GoogleSignInButton: React.FC = () => {
     } catch {}
   }, []);
 
-  // 2. Initialize Google Identity Services
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    let isMounted = true;
-
-    const setupGoogle = () => {
-      if (!isMounted) return;
-
-      // 2a. Initialize One-Tap / ID Token listener
-      if (window.google?.accounts?.id) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: clientId,
-            callback: async (response: any) => {
-              if (response?.credential && isMounted) {
-                setLoading(true);
-                setLoadingStep("Signing you in...");
-                try {
-                  await googleLogin(response.credential);
-                } catch (err: any) {
-                  toast.error("Google Sign-In failed", {
-                    description: err?.message || "Authentication failed.",
-                  });
-                } finally {
-                  if (isMounted) setLoading(false);
-                }
-              }
-            },
-            auto_select: false,
-            cancel_on_tap_outside: true,
-            itp_support: true,
-          });
-        } catch (e) {
-          console.warn("Google ID init error:", e);
-        }
-      }
-
-      // 2b. Initialize OAuth2 Token Client (Custom button popup flow)
-      if (window.google?.accounts?.oauth2) {
-        try {
-          tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-            client_id: clientId,
-            scope: "openid email profile",
-            callback: async (response: any) => {
-              if (!isMounted) return;
-              if (response?.access_token) {
-                setLoading(true);
-                setLoadingStep("Verifying Google account...");
-                try {
-                  await googleLogin(response.access_token);
-                } catch (err: any) {
-                  console.error("Google login error:", err);
-                  toast.error("Google Sign-In failed", {
-                    description: err?.message || "Authentication failed.",
-                  });
-                } finally {
-                  if (isMounted) setLoading(false);
-                }
-              } else if (response?.error) {
-                if (isMounted) setLoading(false);
-                if (response.error !== "popup_closed_by_user") {
-                  toast.error("Google Sign-In error", {
-                    description: response.error_description || response.error,
-                  });
-                }
-              } else {
-                if (isMounted) setLoading(false);
-              }
-            },
-            error_callback: (err: any) => {
-              if (isMounted) setLoading(false);
-              console.warn("Token client error callback:", err);
-            },
-          });
-        } catch (e) {
-          console.warn("Token client init error:", e);
-        }
-      }
-    };
-
-    if (window.google?.accounts?.oauth2) {
-      setupGoogle();
-    } else {
-      const scriptId = "google-gsi-client-script";
-      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-      if (!script) {
-        script = document.createElement("script");
-        script.id = scriptId;
-        script.src = "https://accounts.google.com/gsi/client";
-        script.async = true;
-        script.defer = true;
-        script.onload = setupGoogle;
-        document.body.appendChild(script);
-      } else {
-        script.addEventListener("load", setupGoogle);
-      }
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [clientId, googleLogin]);
-
   const handleGoogleSignIn = useCallback(() => {
     if (loading) return;
 
+    if (typeof window === "undefined" || !window.google?.accounts?.oauth2) {
+      toast.info("Google Authentication is preparing...", {
+        description: "Please click again in a moment.",
+      });
+      return;
+    }
+
     setLoading(true);
-    setLoadingStep("Opening Google sign-in...");
+    setLoadingStep("Opening Google account chooser...");
 
     const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 20000);
+    }, 25000);
 
-    // 1. Try Token Client
-    if (tokenClientRef.current) {
-      try {
-        tokenClientRef.current.requestAccessToken({ prompt: "select_account" });
-        return;
-      } catch (e) {
-        console.warn("Token client request failed:", e);
-      }
-    }
-
-    // 2. Try on-demand init if token client wasn't ready
-    if (window.google?.accounts?.oauth2) {
-      try {
-        const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: clientId,
-          scope: "openid email profile",
-          callback: async (response: any) => {
-            clearTimeout(safetyTimer);
-            if (response?.access_token) {
-              setLoadingStep("Signing you in...");
-              try {
-                await googleLogin(response.access_token);
-              } catch (err: any) {
-                toast.error("Google Sign-In failed", {
-                  description: err?.message || "Authentication failed.",
-                });
-              } finally {
-                setLoading(false);
-              }
-            } else {
+    try {
+      // Initialize Token Client directly in user gesture stack
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "openid email profile",
+        callback: async (response: any) => {
+          clearTimeout(safetyTimer);
+          if (response?.access_token) {
+            setLoading(true);
+            setLoadingStep("Signing you in securely...");
+            try {
+              await googleLogin(response.access_token);
+            } catch (err: any) {
+              console.error("Google Auth error:", err);
+              toast.error("Google Sign-In failed", {
+                description: err?.message || "Authentication failed. Please try again.",
+              });
+            } finally {
               setLoading(false);
             }
-          },
-          error_callback: () => {
-            clearTimeout(safetyTimer);
+          } else if (response?.error) {
             setLoading(false);
-          },
-        });
-        tokenClientRef.current = client;
-        client.requestAccessToken({ prompt: "select_account" });
-        return;
-      } catch (e) {
-        clearTimeout(safetyTimer);
-        setLoading(false);
-      }
-    }
-
-    // 3. Fallback to One-Tap prompt
-    if (window.google?.accounts?.id) {
-      try {
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            clearTimeout(safetyTimer);
+            if (response.error !== "popup_closed_by_user") {
+              toast.error("Google Sign-In error", {
+                description: response.error_description || response.error,
+              });
+            }
+          } else {
             setLoading(false);
           }
-        });
-        return;
-      } catch (e) {
-        clearTimeout(safetyTimer);
-        setLoading(false);
-      }
-    }
+        },
+        error_callback: (err: any) => {
+          clearTimeout(safetyTimer);
+          setLoading(false);
+          console.warn("Google token client error:", err);
+          if (err?.type === "popup_failed_to_open" || err?.type === "popup_closed") {
+            toast.error("Google popup was blocked by browser", {
+              description: "Please enable popups for this site or try logging in with email.",
+            });
+          }
+        },
+      });
 
-    clearTimeout(safetyTimer);
-    setLoading(false);
-    toast.info("Connecting to Google authentication...", {
-      description: "Please click again in a moment.",
-    });
+      // Synchronous requestAccessToken within user click handler (Chrome User Gesture compliant)
+      tokenClient.requestAccessToken({ prompt: "select_account" });
+    } catch (err: any) {
+      clearTimeout(safetyTimer);
+      setLoading(false);
+      console.error("Token client execution error:", err);
+      toast.error("Could not start Google Sign-In", {
+        description: err?.message || "Please check your browser settings and try again.",
+      });
+    }
   }, [clientId, googleLogin, loading]);
 
   return (
