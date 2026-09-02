@@ -5,8 +5,39 @@
 @tailwind utilities;
 
 :root {
-  --background: #0b0f19;
-  --foreground: #f3f4f6;
+  --background: #070b14;
+  --foreground: #f8fafc;
+  --surface: #0f172a;
+  --card: #111a2e;
+  --card-border: #1e293b;
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-card: rgba(23, 32, 51, 0.65);
+  --subtle-text: #94a3b8;
+}
+
+html.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-card: rgba(255, 255, 255, 0.75);
+  --subtle-text: #64748b;
+}
+
+html.dark {
+  --background: #070b14;
+  --foreground: #f8fafc;
+  --surface: #0f172a;
+  --card: #111a2e;
+  --card-border: #1e293b;
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-card: rgba(23, 32, 51, 0.65);
+  --subtle-text: #94a3b8;
 }
 
 body {
@@ -19,9 +50,10 @@ body {
   -webkit-touch-callout: none;
   touch-action: manipulation;
   overscroll-behavior-y: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Safe area padding utilities for mobile phones (iPhone notch / Android gestures) */
+/* Safe area padding utilities for mobile phones */
 .safe-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -29,19 +61,19 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism utilities */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.75);
+  background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
 }
 
 .glass-card {
-  background: rgba(23, 32, 51, 0.65);
+  background: var(--glass-card);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
 }
 
 /* 3D Depth Utilities */

@@ -46,11 +46,11 @@ export default function LoginPage() {
       title="Welcome Back"
       subtitle="Sign in to your account to monitor expenses, category analytics, and budget targets."
       footer={
-        <p className="text-slate-400">
+        <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors inline-flex items-center gap-1 group ml-1"
+            className="text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-semibold hover:text-emerald-300 dark:hover:text-emerald-300 light:hover:text-emerald-700 transition-colors inline-flex items-center gap-1 group ml-1"
           >
             <span>Sign up for free</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -65,32 +65,32 @@ export default function LoginPage() {
 
       {/* 2. Modern Subtle Divider */}
       <div className="flex items-center gap-3 my-4">
-        <div className="h-[1px] flex-1 bg-slate-800" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 select-none">
+        <div className="h-[1px] flex-1 bg-slate-800 dark:bg-slate-800 light:bg-slate-200" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 light:text-slate-400 select-none">
           or continue with email
         </span>
-        <div className="h-[1px] flex-1 bg-slate-800" />
+        <div className="h-[1px] flex-1 bg-slate-800 dark:bg-slate-800 light:bg-slate-200" />
       </div>
 
       {/* 3. Credentials Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email Address Field */}
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700 mb-1.5">
             Email Address
           </label>
           <div className="relative flex items-center">
-            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none transition-colors" />
+            <Mail className="w-4 h-4 text-slate-500 dark:text-slate-500 light:text-slate-400 absolute left-3.5 pointer-events-none transition-colors" />
             <input
               type="email"
               autoComplete="email"
               placeholder="name@example.com"
               {...register("email")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/60 border ${
+              className={`w-full h-11 sm:h-12 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border ${
                 errors.email
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                  : "border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-              } rounded-xl pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all duration-200 focus:ring-4`}
+                  : "border-slate-800 dark:border-slate-800 light:border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-4 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder:text-slate-600 dark:placeholder:text-slate-600 light:placeholder:text-slate-400 outline-none transition-all duration-200 focus:ring-4`}
             />
           </div>
           {errors.email && (
@@ -103,35 +103,35 @@ export default function LoginPage() {
         {/* Password Field */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700">
               Password
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors hover:underline underline-offset-2"
+              className="text-xs text-emerald-400 dark:text-emerald-400 light:text-emerald-600 hover:text-emerald-300 dark:hover:text-emerald-300 light:hover:text-emerald-700 font-medium transition-colors hover:underline underline-offset-2"
             >
               Forgot password?
             </Link>
           </div>
           <div className="relative flex items-center">
-            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none transition-colors" />
+            <Lock className="w-4 h-4 text-slate-500 dark:text-slate-500 light:text-slate-400 absolute left-3.5 pointer-events-none transition-colors" />
             <input
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="Enter your password"
               {...register("password")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/60 border ${
+              className={`w-full h-11 sm:h-12 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border ${
                 errors.password
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                  : "border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-              } rounded-xl pl-10 pr-11 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all duration-200 focus:ring-4`}
+                  : "border-slate-800 dark:border-slate-800 light:border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-11 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder:text-slate-600 dark:placeholder:text-slate-600 light:placeholder:text-slate-400 outline-none transition-all duration-200 focus:ring-4`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3 text-slate-500 hover:text-slate-300 transition-colors p-1.5 rounded-lg focus:outline-none"
+              className="absolute right-3 text-slate-500 dark:text-slate-500 light:text-slate-400 hover:text-slate-300 dark:hover:text-slate-300 light:hover:text-slate-700 transition-colors p-1.5 rounded-lg focus:outline-none"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -148,12 +148,12 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setRememberMe(!rememberMe)}
-            className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300 transition-colors select-none group"
+            className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-400 light:text-slate-600 hover:text-slate-300 dark:hover:text-slate-300 light:hover:text-slate-900 transition-colors select-none group"
           >
             {rememberMe ? (
-              <CheckSquare className="w-4 h-4 text-emerald-400 transition-transform group-hover:scale-110" />
+              <CheckSquare className="w-4 h-4 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 transition-transform group-hover:scale-110" />
             ) : (
-              <Square className="w-4 h-4 text-slate-600 transition-colors group-hover:text-slate-500" />
+              <Square className="w-4 h-4 text-slate-600 dark:text-slate-600 light:text-slate-400 transition-colors group-hover:text-slate-500" />
             )}
             <span>Remember this device for 30 days</span>
           </button>

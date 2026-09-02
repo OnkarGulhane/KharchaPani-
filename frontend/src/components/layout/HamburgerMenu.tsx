@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, LayoutDashboard, Receipt, Wallet, LogOut, Download, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CurrencySelector from "@/components/common/CurrencySelector";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import { usePWA } from "@/hooks/usePWA";
 import { useAuth } from "@/context/AuthContext";
 
@@ -44,6 +45,7 @@ export default function HamburgerMenu() {
           )}
 
           <CurrencySelector compact />
+          <ThemeToggle compact />
           
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -105,11 +107,20 @@ export default function HamburgerMenu() {
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
-                    Display Currency
-                  </label>
-                  <CurrencySelector className="w-full" />
+                <div className="mb-3 space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">
+                      Display Currency
+                    </label>
+                    <CurrencySelector className="w-full" />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-1">
+                      Theme Mode
+                    </label>
+                    <ThemeToggle variant="segmented" className="w-full justify-between" />
+                  </div>
                 </div>
 
                 <nav className="space-y-2">

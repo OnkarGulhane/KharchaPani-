@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Receipt, Wallet, LogOut, Download, ShieldAlert } from "lucide-react";
 import CurrencySelector from "@/components/common/CurrencySelector";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import { usePWA } from "@/hooks/usePWA";
 import { useAuth } from "@/context/AuthContext";
 
@@ -35,23 +36,32 @@ export default function Sidebar() {
 
         {/* User Badge */}
         {user && (
-          <div className="mb-5 p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center gap-3">
+          <div className="mb-4 p-3 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 light:bg-slate-100 border border-slate-800 dark:border-slate-800 light:border-slate-200 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow">
               {user.full_name?.charAt(0)?.toUpperCase() || "U"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-white truncate">{user.full_name}</p>
-              <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+              <p className="text-xs font-semibold text-white dark:text-white light:text-slate-900 truncate">{user.full_name}</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-400 light:text-slate-500 truncate">{user.email}</p>
             </div>
           </div>
         )}
 
-        {/* Currency Switcher in Sidebar */}
-        <div className="mb-5 px-1">
-          <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5 px-1">
-            Display Currency
-          </label>
-          <CurrencySelector className="w-full" />
+        {/* Currency & Theme Controls */}
+        <div className="mb-4 space-y-3 px-1">
+          <div>
+            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 light:text-slate-500 mb-1 px-1">
+              Display Currency
+            </label>
+            <CurrencySelector className="w-full" />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 light:text-slate-500 mb-1 px-1">
+              Theme Mode
+            </label>
+            <ThemeToggle variant="segmented" className="w-full justify-between" />
+          </div>
         </div>
 
         {/* Navigation */}

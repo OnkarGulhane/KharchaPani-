@@ -71,11 +71,11 @@ export default function RegisterPage() {
       title="Create Your Account"
       subtitle="Sign up for free to start managing expenses and tracking your budget targets."
       footer={
-        <p className="text-slate-400">
+        <p className="text-slate-400 dark:text-slate-400 light:text-slate-600">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors inline-flex items-center gap-1 group ml-1"
+            className="text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-semibold hover:text-emerald-300 dark:hover:text-emerald-300 light:hover:text-emerald-700 transition-colors inline-flex items-center gap-1 group ml-1"
           >
             <span>Sign in</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -90,30 +90,30 @@ export default function RegisterPage() {
 
       {/* 2. Sleek Visual Divider */}
       <div className="flex items-center gap-3 my-4">
-        <div className="h-[1px] flex-1 bg-slate-800/90" />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 select-none">
+        <div className="h-[1px] flex-1 bg-slate-800 dark:bg-slate-800 light:bg-slate-200" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 light:text-slate-400 select-none">
           or register with email
         </span>
-        <div className="h-[1px] flex-1 bg-slate-800/90" />
+        <div className="h-[1px] flex-1 bg-slate-800 dark:bg-slate-800 light:bg-slate-200" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Full Name */}
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700 mb-1.5">
             Full Name
           </label>
           <div className="relative flex items-center">
-            <User className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none transition-colors" />
+            <User className="w-4 h-4 text-slate-500 dark:text-slate-500 light:text-slate-400 absolute left-3.5 pointer-events-none transition-colors" />
             <input
               type="text"
               placeholder="e.g. Onkar Gulhane"
               {...register("full_name")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/60 border ${
+              className={`w-full h-11 sm:h-12 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border ${
                 errors.full_name
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                  : "border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-              } rounded-xl pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all duration-200 focus:ring-4`}
+                  : "border-slate-800 dark:border-slate-800 light:border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-4 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder:text-slate-600 dark:placeholder:text-slate-600 light:placeholder:text-slate-400 outline-none transition-all duration-200 focus:ring-4`}
             />
           </div>
           {errors.full_name && (
@@ -125,21 +125,21 @@ export default function RegisterPage() {
 
         {/* Email Address */}
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700 mb-1.5">
             Email Address
           </label>
           <div className="relative flex items-center">
-            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none transition-colors" />
+            <Mail className="w-4 h-4 text-slate-500 dark:text-slate-500 light:text-slate-400 absolute left-3.5 pointer-events-none transition-colors" />
             <input
               type="email"
               autoComplete="email"
               placeholder="name@example.com"
               {...register("email")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/60 border ${
+              className={`w-full h-11 sm:h-12 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border ${
                 errors.email
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                  : "border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-              } rounded-xl pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all duration-200 focus:ring-4`}
+                  : "border-slate-800 dark:border-slate-800 light:border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-4 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder:text-slate-600 dark:placeholder:text-slate-600 light:placeholder:text-slate-400 outline-none transition-all duration-200 focus:ring-4`}
             />
           </div>
           {errors.email && (
@@ -151,28 +151,28 @@ export default function RegisterPage() {
 
         {/* Password */}
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700 mb-1.5">
             Password
           </label>
           <div className="relative flex items-center">
-            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none transition-colors" />
+            <Lock className="w-4 h-4 text-slate-500 dark:text-slate-500 light:text-slate-400 absolute left-3.5 pointer-events-none transition-colors" />
             <input
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="At least 8 characters"
               {...register("password")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/60 border ${
+              className={`w-full h-11 sm:h-12 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border ${
                 errors.password
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                  : "border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-              } rounded-xl pl-10 pr-11 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all duration-200 focus:ring-4`}
+                  : "border-slate-800 dark:border-slate-800 light:border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-11 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder:text-slate-600 dark:placeholder:text-slate-600 light:placeholder:text-slate-400 outline-none transition-all duration-200 focus:ring-4`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3.5 text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-lg focus:outline-none"
+              className="absolute right-3.5 text-slate-500 dark:text-slate-500 light:text-slate-400 hover:text-slate-300 dark:hover:text-slate-300 light:hover:text-slate-700 transition-colors p-1 rounded-lg focus:outline-none"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -186,28 +186,28 @@ export default function RegisterPage() {
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-300 dark:text-slate-300 light:text-slate-700 mb-1.5">
             Confirm Password
           </label>
           <div className="relative flex items-center">
-            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 pointer-events-none transition-colors" />
+            <Lock className="w-4 h-4 text-slate-500 dark:text-slate-500 light:text-slate-400 absolute left-3.5 pointer-events-none transition-colors" />
             <input
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="Re-enter your password"
               {...register("confirm_password")}
-              className={`w-full h-11 sm:h-12 bg-slate-950/60 border ${
+              className={`w-full h-11 sm:h-12 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border ${
                 errors.confirm_password
                   ? "border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20"
-                  : "border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-              } rounded-xl pl-10 pr-11 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all duration-200 focus:ring-4`}
+                  : "border-slate-800 dark:border-slate-800 light:border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+              } rounded-xl pl-10 pr-11 text-sm text-slate-100 dark:text-slate-100 light:text-slate-900 placeholder:text-slate-600 dark:placeholder:text-slate-600 light:placeholder:text-slate-400 outline-none transition-all duration-200 focus:ring-4`}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               tabIndex={-1}
               aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-              className="absolute right-3.5 text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-lg focus:outline-none"
+              className="absolute right-3.5 text-slate-500 dark:text-slate-500 light:text-slate-400 hover:text-slate-300 dark:hover:text-slate-300 light:hover:text-slate-700 transition-colors p-1 rounded-lg focus:outline-none"
             >
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -221,16 +221,16 @@ export default function RegisterPage() {
 
         {/* Password Strength & Requirements Checklist */}
         {passwordValue.length > 0 && (
-          <div className="p-3 bg-slate-950/60 border border-slate-800/90 rounded-xl space-y-2 text-xs">
+          <div className="p-3 bg-slate-950/60 dark:bg-slate-950/60 light:bg-slate-50/90 border border-slate-800/90 dark:border-slate-800/90 light:border-slate-200 rounded-xl space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-400 font-medium">Password strength:</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-400 light:text-slate-600 font-medium">Password strength:</span>
               <span
                 className={`text-[11px] font-bold ${
                   strengthScore === 3
-                    ? "text-emerald-400"
+                    ? "text-emerald-400 dark:text-emerald-400 light:text-emerald-600"
                     : strengthScore === 2
-                    ? "text-amber-400"
-                    : "text-rose-400"
+                    ? "text-amber-400 dark:text-amber-400 light:text-amber-600"
+                    : "text-rose-400 dark:text-rose-400 light:text-rose-600"
                 }`}
               >
                 {strengthScore === 3 ? "Strong" : strengthScore === 2 ? "Moderate" : "Weak"}
@@ -239,17 +239,17 @@ export default function RegisterPage() {
             <div className="grid grid-cols-3 gap-1.5 h-1.5 w-full">
               <div
                 className={`rounded-full transition-colors duration-300 ${
-                  strengthScore >= 1 ? "bg-rose-500" : "bg-slate-800"
+                  strengthScore >= 1 ? "bg-rose-500" : "bg-slate-800 dark:bg-slate-800 light:bg-slate-200"
                 }`}
               />
               <div
                 className={`rounded-full transition-colors duration-300 ${
-                  strengthScore >= 2 ? "bg-amber-400" : "bg-slate-800"
+                  strengthScore >= 2 ? "bg-amber-400" : "bg-slate-800 dark:bg-slate-800 light:bg-slate-200"
                 }`}
               />
               <div
                 className={`rounded-full transition-colors duration-300 ${
-                  strengthScore >= 3 ? "bg-emerald-400" : "bg-slate-800"
+                  strengthScore >= 3 ? "bg-emerald-400" : "bg-slate-800 dark:bg-slate-800 light:bg-slate-200"
                 }`}
               />
             </div>
@@ -257,49 +257,49 @@ export default function RegisterPage() {
             <div className="grid grid-cols-2 gap-1.5 pt-1">
               <div
                 className={`flex items-center gap-1.5 text-[11px] ${
-                  hasMinLength ? "text-emerald-400 font-medium" : "text-slate-500"
+                  hasMinLength ? "text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-medium" : "text-slate-500 dark:text-slate-500 light:text-slate-400"
                 }`}
               >
                 {hasMinLength ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <X className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                  <X className="w-3.5 h-3.5 text-slate-600 dark:text-slate-600 light:text-slate-400 flex-shrink-0" />
                 )}
                 <span>8+ characters</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 text-[11px] ${
-                  hasUppercase ? "text-emerald-400 font-medium" : "text-slate-500"
+                  hasUppercase ? "text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-medium" : "text-slate-500 dark:text-slate-500 light:text-slate-400"
                 }`}
               >
                 {hasUppercase ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <X className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                  <X className="w-3.5 h-3.5 text-slate-600 dark:text-slate-600 light:text-slate-400 flex-shrink-0" />
                 )}
                 <span>1 Uppercase</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 text-[11px] ${
-                  hasNumber ? "text-emerald-400 font-medium" : "text-slate-500"
+                  hasNumber ? "text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-medium" : "text-slate-500 dark:text-slate-500 light:text-slate-400"
                 }`}
               >
                 {hasNumber ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <X className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                  <X className="w-3.5 h-3.5 text-slate-600 dark:text-slate-600 light:text-slate-400 flex-shrink-0" />
                 )}
                 <span>1 Number</span>
               </div>
               <div
                 className={`flex items-center gap-1.5 text-[11px] ${
-                  isMatching ? "text-emerald-400 font-medium" : "text-slate-500"
+                  isMatching ? "text-emerald-400 dark:text-emerald-400 light:text-emerald-600 font-medium" : "text-slate-500 dark:text-slate-500 light:text-slate-400"
                 }`}
               >
                 {isMatching ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-400 light:text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <X className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                  <X className="w-3.5 h-3.5 text-slate-600 dark:text-slate-600 light:text-slate-400 flex-shrink-0" />
                 )}
                 <span>Passwords match</span>
               </div>

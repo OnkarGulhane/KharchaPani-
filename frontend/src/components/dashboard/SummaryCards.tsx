@@ -79,11 +79,11 @@ export default function SummaryCards({ summary, loading }: Props) {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.08 }}
-              className={`glass-card p-4 sm:p-5 rounded-2xl border border-gray-800/80 bg-gradient-to-br ${card.gradient} flex flex-col justify-between relative overflow-hidden group cursor-pointer h-full min-h-[130px] sm:min-h-[140px]`}
+              className={`glass-card p-4 sm:p-5 rounded-2xl border border-gray-800/80 dark:border-gray-800/80 light:border-slate-200/90 bg-gradient-to-br ${card.gradient} flex flex-col justify-between relative overflow-hidden group cursor-pointer h-full min-h-[130px] sm:min-h-[140px]`}
             >
               {/* Top Row */}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-400 uppercase tracking-wider truncate">
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-gray-400 dark:text-gray-400 light:text-slate-600 uppercase tracking-wider truncate">
                   {card.title}
                 </span>
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
@@ -98,11 +98,11 @@ export default function SummaryCards({ summary, loading }: Props) {
 
               {/* Bottom Row */}
               <div className="mt-3 sm:mt-4 min-w-0">
-                <h3 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-white tracking-tight group-hover:text-emerald-300 transition-colors font-mono truncate">
+                <h3 className="text-xl xs:text-2xl sm:text-3xl font-extrabold text-white dark:text-white light:text-slate-900 tracking-tight group-hover:text-emerald-400 dark:group-hover:text-emerald-300 light:group-hover:text-emerald-600 transition-colors font-mono truncate">
                   {card.value}
                 </h3>
-                <p className="text-[11px] sm:text-xs text-gray-400 mt-1 flex items-center gap-1.5 font-medium truncate">
-                  <Sparkles className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-400 transition-colors flex-shrink-0" />
+                <p className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-400 light:text-slate-600 mt-1 flex items-center gap-1.5 font-medium truncate">
+                  <Sparkles className="w-3.5 h-3.5 text-gray-500 dark:text-gray-500 light:text-slate-400 group-hover:text-emerald-400 transition-colors flex-shrink-0" />
                   <span className="truncate">{card.subtitle}</span>
                 </p>
               </div>
