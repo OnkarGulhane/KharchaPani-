@@ -21,9 +21,9 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated && !isAuthPage) {
-        router.push("/login");
+        router.replace("/login");
       } else if (isAuthenticated && isAuthPage) {
-        router.push("/");
+        router.replace("/");
       }
     }
   }, [isAuthenticated, isLoading, isAuthPage, router]);
@@ -42,7 +42,12 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-slate-300 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+        <p className="text-sm font-medium text-slate-400">Redirecting to login...</p>
+      </div>
+    );
   }
 
   return (

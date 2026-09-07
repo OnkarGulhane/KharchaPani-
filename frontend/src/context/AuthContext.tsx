@@ -44,17 +44,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  // Initial silent auth check on mount (optimized for Chrome & all browsers)
+  // Initial silent auth check on mount (optimized for Chrome, mobile & all browsers)
   useEffect(() => {
     let isMounted = true;
 
     const initAuth = async () => {
+      // Safety timeout: Never keep the user on loading screen for more than 2.5 seconds
+      const timeoutId = setTimeout(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }, 2500);
+
       try {
         const storedToken =
           typeof window !== "undefined"
             ? sessionStorage.getItem("kharcha_access_token") ||
               localStorage.getItem("kharcha_access_token_fallback")
             : null;
+
+        const storedRefresh =
+          typeof window !== "undefined"
+            ? localStorage.getItem("kharcha_refresh_token")
+            : null;
+
+        // If no tokens exist at all on device, finish loading instantly (0ms delay)
+        if (!storedToken && !storedRefresh) {
+          if (isMounted) {
+            handleClearSession();
+            setIsLoading(false);
+            clearTimeout(timeoutId);
+            return;
+          }
+        }
 
         // If we have an access token stored, verify it directly
         if (storedToken) {
@@ -65,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (isMounted) {
               setUser(userData);
               setIsLoading(false);
+              clearTimeout(timeoutId);
               return;
             }
           } catch {
@@ -72,21 +95,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // Silent refresh attempt via HttpOnly cookie or stored refresh token
-        try {
-          const refreshData = await authApi.refresh();
-          if (refreshData?.access_token && isMounted) {
-            setAccessToken(refreshData.access_token);
-            setAccessTokenState(refreshData.access_token);
-            if (refreshData?.refresh_token) {
-              setRefreshToken(refreshData.refresh_token);
+        // Silent refresh attempt via stored refresh token or HttpOnly cookie
+        if (storedRefresh) {
+          try {
+            const refreshData = await authApi.refresh();
+            if (refreshData?.access_token && isMounted) {
+              setAccessToken(refreshData.access_token);
+              setAccessTokenState(refreshData.access_token);
+              if (refreshData?.refresh_token) {
+                setRefreshToken(refreshData.refresh_token);
+              }
+              const userData = await authApi.getMe();
+              if (isMounted) {
+                setUser(userData);
+              }
             }
-            const userData = await authApi.getMe();
+          } catch {
             if (isMounted) {
-              setUser(userData);
+              handleClearSession();
             }
           }
-        } catch {
+        } else {
           if (isMounted) {
             handleClearSession();
           }
@@ -97,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } finally {
         if (isMounted) {
+          clearTimeout(timeoutId);
           setIsLoading(false);
         }
       }
