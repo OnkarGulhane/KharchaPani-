@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.init_db import init_db
 from app.core.security import AccessKeyMiddleware
-from app.routers import auth, budget, categories, dashboard, expenses, health
+from app.routers import ai, auth, budget, categories, dashboard, expenses, health
 
 
 @asynccontextmanager
@@ -88,6 +88,7 @@ app.include_router(categories.router, prefix=api_v1_prefix)
 app.include_router(expenses.router, prefix=api_v1_prefix)
 app.include_router(budget.router, prefix=api_v1_prefix)
 app.include_router(dashboard.router, prefix=api_v1_prefix)
+app.include_router(ai.router, prefix=api_v1_prefix)
 
 
 @app.get("/")

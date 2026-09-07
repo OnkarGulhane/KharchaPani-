@@ -2,7 +2,8 @@
 
 ## Kharcha Pani — Personal Expense Tracker
 
-**Version:** 3.0 (Production-Ready Authentication, Google Sign-In & Multi-User Privacy)
+**Version:** 3.8 (Enterprise AI Suite: Predictive Cash Flow Runway, Indian Tax 80C/80D Advisor, Multi-Lingual Voice "बोली खर्चा", Spotify-Wrapped Monthly Digest, Vision Receipt Scanner, "Kharcha Guru" AI Assistant)
+
 
 ---
 
@@ -10,20 +11,22 @@
 
 **Product Name:** Kharcha Pani
 
-**Summary:** Kharcha Pani is a secure personal finance web app that lets individual users sign up, log daily expenses, organize them into personal categories, track a live budget, and analyze spending patterns — with guaranteed private data isolation so that each user's financial records are strictly visible only to themselves.
+**Summary:** Kharcha Pani is a secure personal finance web app that lets individual users sign up, log daily expenses, organize them into personal categories, track a live budget, analyze spending patterns, and receive personalized AI financial recommendations and spending forecasts — with guaranteed private data isolation so that each user's financial records are strictly visible only to themselves.
 
 ### 2. Problem Statement
 
-Most people don't track their expenses properly. Furthermore, users require privacy and convenience:
+Most people don't track their expenses properly and struggle to gain meaningful, actionable insights from raw tables of numbers:
 - They need their financial data to be 100% private and protected from other users.
 - They want frictionless access via Email/Password or 1-click **Google Sign-In**.
-- They need simple recovery options if they forget their password.
-- They want their login session to stay active securely across devices without repeatedly entering passwords.
+- They want fast, effortless expense entry via natural language and voice commands.
+- They need smart, personalized **AI recommendations** (e.g. overspending alerts, savings tips, month-end forecast) driven by their actual real data without hardcoding.
+- The AI layer must be **provider-independent and environment-driven** so models (Gemini, Claude, OpenAI, Local LLMs) can be swapped seamlessly.
 
 ### 3. Core Product Loop & Scope Evolution
 
 - **V1 (Completed MVP):** Core Loop (Log expense → Visual charts → Live budget tracking with temporary access key).
-- **Phase 2 (Current Focus):** Real Production-Ready Authentication (Sign Up, Login, Google 1-Click Login, Forgot/Reset Password, Multi-Device Logout) and **Strict User Data Privacy / Isolation** (Zero access to other users' financial logs).
+- **Phase 2 (Completed):** Real Production-Ready Authentication (Sign Up, Login, Google 1-Click Login, Forgot/Reset Password, Multi-Device Logout), Mandatory Email Verification Gate, and **Strict User Data Privacy / Isolation**.
+- **Phase 3 (Active Focus):** **Provider-Agnostic AI Engine & Smart Financial Intelligence** (Natural Language Quick Add, Voice Logging, AI Financial Recommendations, Spending Velocity Forecast, and Saving Opportunities).
 
 ### 4. Goals
 
@@ -31,33 +34,35 @@ Most people don't track their expenses properly. Furthermore, users require priv
 |---|---|
 | 1-Click Google Sign-In & Email Sign-Up | Fast, frictionless onboarding |
 | 100% Private Financial Data Isolation | User A never sees User B's spending, budget, or categories |
-| Safe, Persistent Login Sessions | User stays logged in securely on their device without exposing sensitive tokens |
-| Add an expense in under 30 seconds | Fast daily logging keeps users consistent |
+| AI Quick Add with Voice Input | Log an expense in under 3 seconds using natural language |
+| AI Recommendations & Insights | Actionable financial guidance (overspending alerts, saving tips) from real data |
+| Provider-Agnostic Architecture | Seamlessly switch between Gemini, OpenAI, Claude, or Local LLMs via `.env` |
+| Safe, Persistent Login Sessions | User stays logged in securely without exposing sensitive tokens |
 | Visual charts & Live budget tracking | Clear insights into spending habits |
 
 ---
 
-### 6. Scope (Phase 2 Current Scope)
+### 6. Scope (Phase 3 Current Scope)
 
 **In-Scope:**
-- **User Accounts & Authentication:**
-  - Email & Password Sign-Up / Registration
-  - Email & Password Login / Sign-In
-  - 1-Click Sign in with Google (OAuth 2.0 / OpenID Connect)
-  - Secure Logout (Single Device & All Devices / Sessions)
-  - Forgot Password & Reset Password via email link
-  - Change Password from user settings
-- **User Data Isolation (Privacy Guarantee):**
-  - Complete multi-tenant privacy: User A can only see, create, edit, or delete User A's expenses, categories, and budgets.
-  - No user can access or tamper with another user's financial data.
-- **Core Financial Tracking:**
-  - Full CRUD on expenses, personalized dynamic categories, live budget status, visual charts, search/filter/sort.
+- **Provider-Agnostic AI Architecture:**
+  - Pluggable AI Provider Interface (`BaseAIProvider`, `GeminiProvider`, `LocalNLPProvider`, extensible for `OpenAIProvider`, `ClaudeProvider`).
+  - Environment-driven provider selection (`AI_PROVIDER=gemini`, `GEMINI_API_KEY`, etc.).
+- **AI Financial Recommendations & Spending Insights:**
+  - Real-time spending health score and category overspending anomalies.
+  - Month-end expense forecasting based on user's current velocity.
+  - 3-5 concrete, personalized actionable recommendations to save money.
+  - Zero hardcoded business data; calculated dynamically from the user's active database records.
+- **Natural Language & Voice Quick Add:**
+  - Multi-lingual text & voice parsing (English, Hinglish, Marathi) into structured expense entries.
+  - Instant 1-click expense creation with category matching and payment mode detection.
+- **User Accounts, Authentication & Isolation:**
+  - Email verification, password reset, Google OAuth 2.0 / FedCM, token rotation, and multi-tenant data isolation.
 
 **Out-of-Scope (Deferred to Future Phases):**
-- Split expenses between multiple users / shared wallets (Phase 3)
-- Bank / SMS / UPI auto-import (Phase 4)
-- AI-based spend prediction (Phase 4)
-- Automated bill notifications (Phase 5)
+- Split expenses between multiple users / shared wallets (Phase 4)
+- Bank / SMS / UPI auto-import (Phase 5)
+- Automated bill notifications & recurring scheduler (Phase 6)
 
 ---
 
@@ -161,6 +166,27 @@ All capabilities below work together (e.g. filter by "Food" category, then sort 
 | ID | Requirement | Priority |
 |---|---|---|
 | FR-30 | No hardcoded/demo data at any stage — all data is dynamically created, stored, and fetched from the real data layer | P0 |
+
+#### 7.9 AI Financial Recommendations & Smart Insights (Phase 3)
+
+| ID | Requirement | Description | Priority |
+|---|---|---|---|
+| FR-AI1 | Provider-Agnostic AI Engine | Abstracted AI Service supporting Gemini 1.5 Flash, Local Rule-Engine, and extensible to Claude/OpenAI/Groq via `.env` settings (`AI_PROVIDER`). | P0 |
+| FR-AI2 | Real-Time Spending Insights | Evaluates user's real transactions to provide a Financial Health Score (0-100), key spending summary, and positive/warning signals. | P0 |
+| FR-AI3 | Month-End Expense Forecast | Projects total expected monthly spend based on daily velocity ($v = \text{spent} / \text{days\_elapsed} \times \text{total\_days}$) and alerts if budget will be exceeded. | P0 |
+| FR-AI4 | Category Optimization Tips | Generates 3-5 prioritized, concrete actionable recommendations for saving money based on highest non-essential spend categories. | P0 |
+| FR-AI5 | Natural Language "Quick Add" | Parses plain text/voice sentences into structured expense entries with automatic category matching and payment mode detection. | P0 |
+| FR-AI6 | Zero-Trust Data Privacy | AI prompt only receives aggregated financial statistics of the authenticated user (`WHERE user_id == current_user.id`). No cross-tenant data leak. | P0 |
+
+#### 7.10 Next-Gen AI Financial Suite (v3.7)
+
+| ID | Requirement | Description | Priority |
+|---|---|---|---|
+| FR-AI7 | Smart Receipt & Bill Scanner | Multimodal Vision AI (`POST /api/v1/ai/receipt-scan`) extracting merchant, amount, date, payment mode, tax, and itemized lines from images/PDFs with auto-category mapping. | P0 |
+| FR-AI8 | "Kharcha Guru" AI Chatbot | Interactive financial assistant (`POST /api/v1/ai/chat`) answering natural language queries in English/Hinglish/Marathi with contextual transaction data and mini-charts. | P0 |
+| FR-AI9 | Subscriptions & EMI Detector | AI frequency detector (`GET /api/v1/ai/subscriptions`) analyzing cadence of recurring charges (Netflix, Spotify, Gym, Rent, SIP, EMI) with annual drain projections. | P0 |
+| FR-AI10 | Goal-Based Savings Simulator | AI goal planner (`POST /api/v1/ai/savings-goal`) calculating category spending cuts to achieve target dream purchases within defined timelines. | P0 |
+| FR-AI11 | 50/30/20 Rule Classifier | Real-time classification of transactions into Needs (50%), Wants (30%), and Savings (20%) with visual distribution gauge. | P0 |
 
 ### 8. Key User Flows
 

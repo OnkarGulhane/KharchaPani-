@@ -2,8 +2,8 @@
 
 ## Kharcha Pani — Personal Expense Tracker
 
-**Version:** 3.0 (Production-Ready Authentication, OAuth 2.0 & Multi-User Data Isolation)  
-**Date:** August 2026
+**Version:** 3.6 (AI Financial Recommendations, Spending Insights, Natural Language Quick Add & Provider-Agnostic Multi-Model AI Engine)  
+**Date:** September 2026
 
 ---
 
@@ -11,23 +11,25 @@
 
 ### 1.1 Purpose
 
-This SRS serves as the authoritative technical blueprint for **Kharcha Pani** — defining the technical architecture, security protocols, database schemas, cryptographic standards, API contracts, frontend state management, and multi-tenant data isolation rules required to support multi-user operations with enterprise-grade security.
+This SRS serves as the authoritative technical blueprint for **Kharcha Pani** — defining the technical architecture, security protocols, database schemas, cryptographic standards, API contracts, frontend state management, provider-agnostic AI recommendation engine, and multi-tenant data isolation rules required to support multi-user operations with enterprise-grade security.
 
 ### 1.2 Scope
 
 Kharcha Pani is a full-stack personal finance application featuring:
 - Secure User Authentication (Email/Password & Google OAuth 2.0 / OpenID Connect).
-- JWT Authentication with Refresh Token Rotation in `HttpOnly`, `SameSite=Lax`, `Secure` cookies.
+- JWT Authentication with Refresh Token Rotation in `HttpOnly`, `SameSite=none`, `Secure` cookies.
 - Server-side session tracking with single-session and all-session revocation.
 - Strict Multi-Tenant User Data Isolation (Zero RBAC, owner-exclusive authorization on all resources).
 - Full Expense CRUD, Category Management with safe deletion workflows, Budget goal tracking, and Real-time Visual Analytics.
+- **Provider-Agnostic AI Engine & Financial Intelligence**: Natural Language Quick Add, Voice Logging, Spending Velocity Forecast, and Actionable AI Recommendations.
 
 ### 1.3 Core Technical Principles
 
 1. **Zero-Trust Client Authorization**: The client/frontend is NEVER trusted for user identification (`user_id`). The authenticated user context is derived strictly from validated backend JWT claims.
-2. **Cryptographic Protection of Credentials**: Passwords are never stored in plaintext (BCrypt/Argon2 with work factor ≥12). Refresh tokens are stored strictly as SHA-256 hashes.
-3. **No Hardcoded Data**: Zero dummy or mock data. All financial metrics and reports are computed dynamically from PostgreSQL using SQLAlchemy 2.0 async engine.
-4. **Non-Breaking Extensibility**: Database constraints and migrations (Alembic) maintain clean schema versioning with foreign keys and composite unique constraints.
+2. **Provider-Agnostic AI Architecture**: AI components adhere to a decoupled provider interface (`BaseAIProvider`), allowing zero-code-change switching between Google Gemini, OpenAI, Claude, or Local NLP engines via environment configuration (`AI_PROVIDER`).
+3. **No Hardcoded Data**: Zero dummy or mock data. All financial metrics, recommendations, and reports are computed dynamically from PostgreSQL using SQLAlchemy 2.0 async engine strictly filtered by `user_id == current_user.id`.
+4. **Cryptographic Protection of Credentials**: Passwords are never stored in plaintext (BCrypt/Argon2 with work factor ≥12). Refresh tokens and verification tokens are stored strictly as SHA-256 hashes.
+5. **Non-Breaking Extensibility**: Database constraints and migrations (Alembic) maintain clean schema versioning with foreign keys and composite unique constraints.
 
 ---
 
@@ -38,11 +40,14 @@ Kharcha Pani is a full-stack personal finance application featuring:
 | Frontend Framework | Next.js (App Router) | Next.js 14, React 18, TypeScript 5+ |
 | Styling & UI | Tailwind CSS + Framer Motion | Tailwind v3.4+, Framer Motion v11+ |
 | Client State & Forms | TanStack React Query + React Hook Form | TanStack Query v5+, Zod v3.23+ |
+| Voice & Speech | Web Speech API | Native Browser SpeechRecognition (`en-IN` & multi-lingual) |
 | Data Visualization | Recharts | Recharts v2.12+ (2D charts authoritative) |
 | Backend Framework | FastAPI | FastAPI 0.110+, Python 3.11+, Uvicorn (ASGI) |
+| AI / LLM Engine | Google Gemini 1.5 Flash + Local NLP Engine | Async REST integration via `httpx`, extensible to OpenAI/Claude |
 | Database Engine | PostgreSQL | PostgreSQL 15+ (Hosted on Supabase) |
 | ORM & Migrations | SQLAlchemy 2.0 Async + Alembic | SQLAlchemy 2.0 (Asyncpg driver) |
 | Authentication & Security | PyJWT + Passlib / BCrypt + Google Auth | PyJWT 2.8+, Passlib 1.7.4 (BCrypt), `google-auth` |
+| Email Service | Gmail SMTP + Resend API | Decoupled Provider pattern via `email_service.py` |
 | Rate Limiting & Protection | SlowAPI | SlowAPI (In-memory / Redis compatible) |
 | Production Hosting | Vercel (Frontend) + Render (Backend) | Dockerized backend with Gunicorn/Uvicorn workers |
 
@@ -483,7 +488,94 @@ Server returns response
    - `test_refresh_token_rotation`: Verifies that using a refresh token revokes it and produces a new valid hash.
    - `test_refresh_token_revocation`: Verifies logout prevents subsequent refresh calls.
    - `test_user_data_isolation`: Verifies that User A receives 404 when querying/modifying User B's expenses.
+   - `test_ai_recommendations`: Verifies dynamic insights generated from real database transactions.
+   - `test_ai_quick_parse`: Verifies multi-lingual natural language expense parsing.
 2. **E2E & Frontend Flow**:
    - Google Sign-In button flow with verified token payload.
    - Complete login -> dashboard -> log expense -> logout cycle.
    - Cross-browser cookie persistence and silent token refresh.
+
+---
+
+## 11. Provider-Agnostic AI Recommendations & Financial Intelligence Architecture
+
+### 11.1 Decoupled AI Provider Architecture
+```
+                         ┌────────────────────────┐
+                         │     AIService Layer    │
+                         └───────────┬────────────┘
+                                     │ Dynamic Factory (settings.AI_PROVIDER)
+                                     ▼
+                         ┌────────────────────────┐
+                         │    BaseAIProvider      │ (Abstract Interface)
+                         └───────────┬────────────┘
+               ┌─────────────────────┼─────────────────────┐
+               ▼                     ▼                     ▼
+     ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+     │  GeminiProvider  │  │ LocalNLPProvider │  │  Future Models   │
+     │(Google Gemini    │  │ (Offline Rules & │  │(OpenAI / Claude  │
+     │ 1.5 Flash REST)  │  │  Heuristics)     │  │ / Ollama Local)  │
+     └──────────────────┘  └──────────────────┘  └──────────────────┘
+```
+
+### 11.2 Environment Configuration
+```ini
+AI_PROVIDER=gemini       # Options: "gemini", "local_nlp" (extensible to "openai", "claude")
+GEMINI_API_KEY=AIzaSy... # Optional: Google Gemini API Key
+GEMINI_MODEL=gemini-1.5-flash
+```
+
+### 11.3 Recommendation Engine Contract (`GET /api/v1/ai/recommendations`)
+- **Authorization**: Bearer Access Token (Derived strictly via `get_current_active_user`).
+- **Data Query**: Aggregates current month expenses, category spend distributions, monthly budget limits, and previous month trends using SQLAlchemy strictly scoped with `WHERE user_id == current_user.id`.
+- **Response Schema (`AIRecommendationsResponse`)**:
+```json
+{
+  "financial_health_score": 82,
+  "summary_text": "You have spent ₹14,200 of your ₹25,000 monthly budget (56.8%).",
+  "projected_month_end_spend": 21800.00,
+  "budget_status_warning": "On Track",
+  "top_overspending_category": "Dining & Food",
+  "recommendations": [
+    {
+      "category": "Food",
+      "type": "warning",
+      "title": "Food Spend Acceleration",
+      "description": "Your food expenses increased by 22% compared to last week. Limit dining out to save approx ₹2,500.",
+      "estimated_monthly_saving": 2500.00
+    },
+    {
+      "category": "Entertainment",
+      "type": "tip",
+      "title": "Subscription Optimization",
+      "description": "Entertainment is consuming 18% of discretionary spend. Review recurring digital services.",
+      "estimated_monthly_saving": 800.00
+    }
+  ],
+  "engine_used": "gemini-1.5-flash"
+}
+```
+
+### 11.4 Zero-Trust Isolation Guarantee
+1. User financial records are aggregated on the server before prompt compilation.
+2. AI prompts contain **only anonymous statistical aggregates** (e.g. `Total Spend: 14200, Food: 5200, Transport: 2100`) without exposing user IDs, personal names, account numbers, or external identifiers.
+3. No cross-tenant data can ever be fed into an AI prompt.
+
+### 11.5 Multimodal Vision Receipt Scanner (`POST /api/v1/ai/receipt-scan`)
+- **Payload**: `multipart/form-data` with `file` binary (JPEG, PNG, WebP, PDF ≤ 10MB).
+- **Processing**: Gemini 1.5 Flash multimodal vision REST payload passing `inline_data` base64.
+- **Output**: `ReceiptScanResponse` with `merchant_name`, `amount`, `date`, `category_id`, `line_items`, `tax_amount`.
+
+### 11.6 Kharcha Guru Financial Chatbot (`POST /api/v1/ai/chat`)
+- **Payload**: `AIChatRequest` (`message`, `history`).
+- **Processing**: Context injection of live user 30-day aggregates, top categories, and recent transactions.
+- **Output**: `AIChatResponse` with markdown reply, follow-up suggested questions, and optional `mini_chart`.
+
+### 11.7 Subscriptions & EMI Detector (`GET /api/v1/ai/subscriptions`)
+- **Output**: `SubscriptionsResponse` containing active recurring merchants, cadence (Monthly/Yearly), annual projected expenditure, and next payment date estimates.
+
+### 11.8 Goal-Based Savings Simulator (`POST /api/v1/ai/savings-goal`)
+- **Payload**: `SavingsGoalRequest` (`goal_name`, `target_amount`, `target_months`).
+- **Processing**: Discretionary spending cut solver calculating required monthly savings and feasibility score (0–100).
+- **Output**: `SavingsGoalResponse` with category reduction percentages, monthly savings potential, and executive advice.
+

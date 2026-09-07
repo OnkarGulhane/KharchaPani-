@@ -21,23 +21,66 @@ import MonthComparisonCard from "@/components/dashboard/MonthComparisonCard";
 import TopCategoriesList from "@/components/dashboard/TopCategoriesList";
 import AverageSpendCard from "@/components/dashboard/AverageSpendCard";
 import RecentExpenses from "@/components/dashboard/RecentExpenses";
+import AIInsightsCard from "@/components/dashboard/AIInsightsCard";
+import { SubscriptionsCard } from "@/components/dashboard/SubscriptionsCard";
+import { SavingsGoalSimulator } from "@/components/dashboard/SavingsGoalSimulator";
+import { CashFlowForecastModal } from "@/components/dashboard/CashFlowForecastModal";
+import { TaxAdvisorModal } from "@/components/dashboard/TaxAdvisorModal";
+import { MoneyDigestModal } from "@/components/dashboard/MoneyDigestModal";
+import { FinancialHealthModal } from "@/components/dashboard/FinancialHealthModal";
+import { BudgetBurnForecastModal } from "@/components/dashboard/BudgetBurnForecastModal";
+import { ExpenseSentimentModal } from "@/components/dashboard/ExpenseSentimentModal";
+import { VoiceExpenseModal } from "@/components/expenses/VoiceExpenseModal";
+import { ReceiptScanModal } from "@/components/expenses/ReceiptScanModal";
+import { KharchaGuruChat } from "@/components/ai/KharchaGuruChat";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
+import QuickAddModal from "@/components/expenses/QuickAddModal";
 import BudgetForm from "@/components/budget/BudgetForm";
 import CategoryManager from "@/components/categories/CategoryManager";
 import CurrencySelector from "@/components/common/CurrencySelector";
 import { usePWA } from "@/hooks/usePWA";
 
-import { Plus, Tags, RefreshCw, Sparkles, Smartphone, Download, QrCode } from "lucide-react";
+import {
+  Plus,
+  Tags,
+  RefreshCw,
+  Sparkles,
+  Smartphone,
+  Target,
+  Camera,
+  Zap,
+  Mic,
+  Calculator,
+  TrendingUp,
+  Headphones,
+  HeartPulse,
+  Flame,
+  Brain,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<PeriodType>("month");
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
+  const [isTaxAdvisorModalOpen, setIsTaxAdvisorModalOpen] = useState(false);
+  const [isMoneyDigestModalOpen, setIsMoneyDigestModalOpen] = useState(false);
+  const [isFinancialHealthModalOpen, setIsFinancialHealthModalOpen] = useState(false);
+  const [isBudgetBurnModalOpen, setIsBudgetBurnModalOpen] = useState(false);
+  const [isExpenseSentimentModalOpen, setIsExpenseSentimentModalOpen] = useState(false);
+  const [expenseInitialData, setExpenseInitialData] = useState<any>(null);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { isInstalled, setShowInstallModal } = usePWA();
+
+
 
   const queryClient = useQueryClient();
 
@@ -77,11 +120,12 @@ export default function DashboardPage() {
         refetchComparison(),
         refetchTopCat(),
         refetchAvgSpend(),
-        queryClient.invalidateQueries(),
+        queryClient.invalidateQueries({ queryKey: ["ai-recommendations"] }),
+        queryClient.invalidateQueries({ queryKey: ["expenses"] }),
       ]);
-      toast.success("Dashboard data refreshed! ✨");
-    } catch (err: any) {
-      toast.error("Failed to refresh dashboard");
+      toast.success("Dashboard data & AI analytics refreshed! ✨");
+    } catch {
+      toast.error("Failed to refresh dashboard data");
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
@@ -102,18 +146,18 @@ export default function DashboardPage() {
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
-              Live Analytics
+              Live Analytics & AI
             </span>
           </div>
           <p className="text-xs md:text-sm text-gray-400 mt-1">
-            Real-time financial analytics, 3D timeline trends, and budget goals.
+            Real-time financial analytics, AI advice, and smart budget goals.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <ReportPeriodSelector period={period} onChange={setPeriod} />
 
-          {/* Currency Switcher in Header (Desktop / Tablet) */}
+          {/* Currency Switcher in Header */}
           <div className="hidden md:block">
             <CurrencySelector />
           </div>
@@ -130,7 +174,104 @@ export default function DashboardPage() {
           )}
 
           <button
-            onClick={() => setIsExpenseModalOpen(true)}
+            onClick={() => setIsFinancialHealthModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="AI Financial Health Score & 5-Pillar Insights"
+          >
+            <HeartPulse className="w-4 h-4 text-emerald-400 animate-pulse" />
+            <span>Health Score</span>
+          </button>
+
+          <button
+            onClick={() => setIsBudgetBurnModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Burn Rate & Category Budget Forecast"
+          >
+            <Flame className="w-4 h-4 text-indigo-400" />
+            <span>Budget Forecast</span>
+          </button>
+
+          <button
+            onClick={() => setIsExpenseSentimentModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 text-pink-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Psychological Sentiment & Emotional Impulse Analysis"
+          >
+            <Brain className="w-4 h-4 text-pink-400" />
+            <span>Expense Sentiment</span>
+          </button>
+
+          <button
+            onClick={() => setIsMoneyDigestModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 text-pink-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="View Monthly Wrapped Story Cards"
+          >
+            <Headphones className="w-4 h-4 text-pink-400" />
+            <span>Monthly Wrap</span>
+          </button>
+
+
+          <button
+            onClick={() => setIsTaxAdvisorModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Indian Income Tax 80C/80D Advisor"
+          >
+            <Calculator className="w-4 h-4 text-emerald-400" />
+            <span>Tax Advisor</span>
+          </button>
+
+          <button
+            onClick={() => setIsCashFlowModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Predictive Cash Flow & Zero-Day Runway"
+          >
+            <TrendingUp className="w-4 h-4 text-indigo-400" />
+            <span>Cash Runway</span>
+          </button>
+
+          <button
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="बोली खर्चा - Speak in Marathi, Hindi, or English"
+          >
+            <Mic className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span>बोली खर्चा</span>
+          </button>
+
+          <button
+            onClick={() => setIsGoalModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Simulate Savings Goal with AI"
+          >
+            <Target className="w-4 h-4 text-purple-400" />
+            <span>AI Goal Planner</span>
+          </button>
+
+          <button
+            onClick={() => setIsReceiptModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Scan Receipt with Vision AI"
+          >
+            <Camera className="w-4 h-4 text-teal-400" />
+            <span>Scan Bill</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setExpenseInitialData(null);
+              setIsQuickAddModalOpen(true);
+            }}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
+            title="Quick Add with Natural Language AI"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            <span>AI Quick Add</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setExpenseInitialData(null);
+              setIsExpenseModalOpen(true);
+            }}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
           >
             <Plus className="w-4 h-4" />
@@ -177,13 +318,19 @@ export default function DashboardPage() {
         onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
       />
 
+      {/* AI Financial Intelligence & Actionable Recommendations */}
+      <AIInsightsCard />
+
+      {/* Recurring Subscriptions & EMI Section */}
+      <SubscriptionsCard />
+
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <CategoryPieChart data={charts?.pie_chart || []} loading={loadingCharts} />
         <SpendTrendChart data={charts?.trend_chart || []} loading={loadingCharts} />
       </div>
 
-      {/* Analytics Breakdown Grid (Responsive 1-col on mobile, 2-col on tablet, 3-col on desktop) */}
+      {/* Analytics Breakdown Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <MonthComparisonCard comparison={comparison} loading={loadingComparison} />
         <TopCategoriesList categories={topCategories || []} loading={loadingTopCat} />
@@ -196,10 +343,100 @@ export default function DashboardPage() {
       <RecentExpenses expenses={summary?.recent_expenses || []} loading={loadingSummary} />
 
       {/* Modals */}
+      {isVoiceModalOpen && (
+        <VoiceExpenseModal
+          isOpen={isVoiceModalOpen}
+          onClose={() => setIsVoiceModalOpen(false)}
+          onExpenseCreated={handleRefreshAll}
+          onOpenFullForm={(parsedData) => {
+            setExpenseInitialData(parsedData);
+            setIsExpenseModalOpen(true);
+          }}
+        />
+      )}
+
+      {isCashFlowModalOpen && (
+        <CashFlowForecastModal
+          isOpen={isCashFlowModalOpen}
+          onClose={() => setIsCashFlowModalOpen(false)}
+        />
+      )}
+
+      {isTaxAdvisorModalOpen && (
+        <TaxAdvisorModal
+          isOpen={isTaxAdvisorModalOpen}
+          onClose={() => setIsTaxAdvisorModalOpen(false)}
+        />
+      )}
+
+      {isMoneyDigestModalOpen && (
+        <MoneyDigestModal
+          isOpen={isMoneyDigestModalOpen}
+          onClose={() => setIsMoneyDigestModalOpen(false)}
+        />
+      )}
+
+      {isFinancialHealthModalOpen && (
+        <FinancialHealthModal
+          isOpen={isFinancialHealthModalOpen}
+          onClose={() => setIsFinancialHealthModalOpen(false)}
+        />
+      )}
+
+      {isBudgetBurnModalOpen && (
+        <BudgetBurnForecastModal
+          isOpen={isBudgetBurnModalOpen}
+          onClose={() => setIsBudgetBurnModalOpen(false)}
+        />
+      )}
+
+      {isExpenseSentimentModalOpen && (
+        <ExpenseSentimentModal
+          isOpen={isExpenseSentimentModalOpen}
+          onClose={() => setIsExpenseSentimentModalOpen(false)}
+        />
+      )}
+
+
+      {isReceiptModalOpen && (
+        <ReceiptScanModal
+          isOpen={isReceiptModalOpen}
+          onClose={() => setIsReceiptModalOpen(false)}
+          onExpenseCreated={handleRefreshAll}
+          onPreFillExpense={(parsedData) => {
+            setExpenseInitialData(parsedData);
+            setIsExpenseModalOpen(true);
+          }}
+        />
+      )}
+
+      {isGoalModalOpen && (
+        <SavingsGoalSimulator
+          isOpen={isGoalModalOpen}
+          onClose={() => setIsGoalModalOpen(false)}
+        />
+      )}
+
+      {isQuickAddModalOpen && (
+        <QuickAddModal
+          isOpen={isQuickAddModalOpen}
+          onClose={() => setIsQuickAddModalOpen(false)}
+          onSuccess={handleRefreshAll}
+          onOpenFullFormWithData={(parsedData) => {
+            setExpenseInitialData(parsedData);
+            setIsExpenseModalOpen(true);
+          }}
+        />
+      )}
+
       {isExpenseModalOpen && (
         <ExpenseForm
           isOpen={isExpenseModalOpen}
-          onClose={() => setIsExpenseModalOpen(false)}
+          initialData={expenseInitialData}
+          onClose={() => {
+            setIsExpenseModalOpen(false);
+            setExpenseInitialData(null);
+          }}
           onSuccess={handleRefreshAll}
         />
       )}
@@ -219,6 +456,10 @@ export default function DashboardPage() {
           onSuccess={handleRefreshAll}
         />
       )}
+
+      {/* Floating Kharcha Guru Chatbot */}
+      <KharchaGuruChat />
     </motion.div>
   );
 }
+

@@ -20,9 +20,10 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   expenseToEdit?: Expense | null;
+  initialData?: Partial<Expense> | null;
 }
 
-export default function ExpenseForm({ isOpen, onClose, onSuccess, expenseToEdit }: Props) {
+export default function ExpenseForm({ isOpen, onClose, onSuccess, expenseToEdit, initialData }: Props) {
   const queryClient = useQueryClient();
   const { currency, formatAmount } = useCurrency();
   const [isAddingNewCat, setIsAddingNewCat] = useState(false);
@@ -61,35 +62,96 @@ export default function ExpenseForm({ isOpen, onClose, onSuccess, expenseToEdit 
     },
   });
 
+  const [autoMatchedCategoryName, setAutoMatchedCategoryName] = useState<string | null>(null);
+  const [isManuallySelected, setIsManuallySelected] = useState(false);
+
   const currentCategoryId = watch("category_id");
+  const enteredTitle = watch("title");
   const enteredAmount = watch("amount");
 
-  // Initialize form default values when modal opens or expenseToEdit changes
+  // Initialize form default values when modal opens, expenseToEdit, or initialData changes
   useEffect(() => {
     if (isOpen) {
-      const catId = expenseToEdit
-        ? String(expenseToEdit.category_id)
-        : categories.length > 0
-        ? String(categories[0].id)
-        : "";
+      const dataSrc = expenseToEdit || initialData;
+      const catId = dataSrc?.category_id ? String(dataSrc.category_id) : "";
+
+      setIsManuallySelected(!!dataSrc?.category_id);
+      setAutoMatchedCategoryName(null);
 
       reset({
-        title: expenseToEdit?.title || "",
-        amount: expenseToEdit?.amount,
-        date: expenseToEdit?.date || new Date().toISOString().split("T")[0],
-        category_id: catId as any,
-        notes: expenseToEdit?.notes || "",
-        payment_mode: expenseToEdit?.payment_mode || "UPI",
+        title: dataSrc?.title || "",
+        amount: dataSrc?.amount !== undefined ? Number(dataSrc.amount) : undefined,
+        date: dataSrc?.date || new Date().toISOString().split("T")[0],
+        category_id: (catId || "") as any,
+        notes: dataSrc?.notes || "",
+        payment_mode: dataSrc?.payment_mode || "UPI",
       });
     }
-  }, [isOpen, expenseToEdit, reset]);
+  }, [isOpen, expenseToEdit, initialData, reset]);
 
-  // Set default category if not selected
+  // Real-time smart category matcher based on title keywords
   useEffect(() => {
-    if (isOpen && !expenseToEdit && categories.length > 0 && !currentCategoryId) {
-      setValue("category_id", String(categories[0].id) as any, { shouldValidate: true });
+    if (!isOpen || isEdit || isManuallySelected || !enteredTitle || categories.length === 0) {
+      return;
     }
-  }, [isOpen, expenseToEdit, categories, currentCategoryId, setValue]);
+
+    const lower = enteredTitle.toLowerCase().trim();
+    if (lower.length < 2) return;
+
+    // 1. Direct name match
+    const directMatch = categories.find((c) => lower.includes(c.name.toLowerCase()));
+    if (directMatch) {
+      setValue("category_id", String(directMatch.id) as any, { shouldValidate: true });
+      setAutoMatchedCategoryName(directMatch.name);
+      return;
+    }
+
+    // 2. Keyword dictionary mapping
+    const KEYWORD_MAP: Record<string, string[]> = {
+      food: [
+        "swiggy", "zomato", "pizza", "burger", "food", "cafe", "coffee", "chai", "tea",
+        "lunch", "dinner", "breakfast", "nashta", "snack", "grocer", "dmart", "blinkit",
+        "zepto", "instamart", "milk", "egg", "hotel", "restaurant", "mcdonalds", "kfc",
+        "paneer", "chicken", "sweets", "mithai", "bhaji"
+      ],
+      transport: [
+        "uber", "ola", "auto", "petrol", "diesel", "fuel", "cab", "taxi", "metro", "bus",
+        "train", "flight", "toll", "parking", "rapido", "ticket", "fastag", "cng"
+      ],
+      utilities: [
+        "wifi", "broadband", "internet", "recharge", "electricity", "bill", "water",
+        "gas", "cylinder", "dth", "maintenance", "mobile", "power"
+      ],
+      entertainment: [
+        "netflix", "spotify", "prime", "hotstar", "movie", "cinema", "theatre", "pvr",
+        "inox", "concert", "game", "gaming", "party", "club", "vip", "youtube"
+      ],
+      rent: ["rent", "pg", "flat rent", "room rent", "deposit", "society", "brokerage"],
+      shopping: [
+        "amazon", "flipkart", "myntra", "clothes", "shoes", "zara", "h&m", "meesho",
+        "dress", "shirt", "mall", "shopping", "electronics", "gadget"
+      ],
+      health: [
+        "doctor", "medicine", "pharmacy", "clinic", "hospital", "test", "tablet",
+        "apollo", "medplus", "health", "pills", "dentist"
+      ],
+      education: ["books", "course", "udemy", "tuition", "college", "school", "fees", "class"],
+      investments: ["sip", "mutual fund", "stock", "shares", "crypto", "gold", "investment"],
+    };
+
+    for (const [group, kws] of Object.entries(KEYWORD_MAP)) {
+      if (kws.some((kw) => lower.includes(kw))) {
+        const target = categories.find(
+          (c) => c.name.toLowerCase().includes(group) || group.includes(c.name.toLowerCase())
+        );
+        if (target) {
+          setValue("category_id", String(target.id) as any, { shouldValidate: true });
+          setAutoMatchedCategoryName(target.name);
+          return;
+        }
+      }
+    }
+  }, [isOpen, isEdit, isManuallySelected, enteredTitle, categories, setValue]);
 
   // Live Budget Exceed Warning Calculation
   const budgetStatus = summary?.budget_status;
@@ -290,8 +352,13 @@ export default function ExpenseForm({ isOpen, onClose, onSuccess, expenseToEdit 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">
-                    Category *
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                    <span>Category *</span>
+                    {autoMatchedCategoryName && !isManuallySelected && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 normal-case font-semibold">
+                        ✨ Auto-matched
+                      </span>
+                    )}
                   </label>
                   <button
                     type="button"
@@ -323,11 +390,16 @@ export default function ExpenseForm({ isOpen, onClose, onSuccess, expenseToEdit 
                   </div>
                 ) : (
                   <select
-                    {...register("category_id")}
+                    {...register("category_id", {
+                      onChange: () => {
+                        setIsManuallySelected(true);
+                        setAutoMatchedCategoryName(null);
+                      },
+                    })}
                     className="w-full bg-slate-900/90 dark:bg-slate-900/90 light:bg-white border border-slate-700/80 dark:border-slate-700/80 light:border-slate-300 rounded-xl py-2.5 px-3.5 text-sm text-white dark:text-white light:text-slate-900 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
                   >
                     <option value="" className="bg-slate-900 text-white dark:bg-slate-900 dark:text-white light:bg-white light:text-slate-900">
-                      {loadingCategories ? "Loading categories..." : "Select Category"}
+                      {loadingCategories ? "Loading categories..." : "Select Category (Required)"}
                     </option>
                     {categories.map((cat) => (
                       <option

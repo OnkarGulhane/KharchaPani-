@@ -25,9 +25,9 @@ class CategoryService:
         result = await db.execute(stmt)
         rows = result.all()
 
-        # If user has no categories, auto-seed starter categories on the fly
-        if len(rows) == 0:
-            from app.seed.seed_categories import seed_user_starter_categories
+        # If user has fewer than default starter categories, auto-seed missing starter categories
+        from app.seed.seed_categories import seed_user_starter_categories, DEFAULT_CATEGORIES
+        if len(rows) < len(DEFAULT_CATEGORIES):
             await seed_user_starter_categories(db, user_id=user_id)
             result = await db.execute(stmt)
             rows = result.all()

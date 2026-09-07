@@ -57,6 +57,30 @@ class Settings(BaseSettings):
     RESEND_FROM_EMAIL: str = ""
     RESEND_FROM_NAME: str = "KharchaPani"
 
+    # AI Configuration (Decoupled Strategy Pattern: Gemini, Groq, OpenAI, Anthropic, Ollama, Local NLP)
+    AI_PROVIDER: str = "gemini"  # "gemini", "groq", "openai", "anthropic", "ollama", "local_nlp"
+    
+    # Google Gemini
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+
+    # OpenAI / Compatible Endpoints
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+
+    # Groq (Ultra-fast Llama 3.3)
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+
+    # Anthropic Claude
+    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-3-5-haiku-20241022"
+
+    # Local Ollama / vLLM
+    OLLAMA_BASE_URL: str = "http://localhost:11434/v1"
+    OLLAMA_MODEL: str = "llama3.2"
+
     # Token Expiry Configuration (Minutes)
     EMAIL_VERIFICATION_EXPIRE_MINUTES: int = 30
     PASSWORD_RESET_EXPIRE_MINUTES: int = 30

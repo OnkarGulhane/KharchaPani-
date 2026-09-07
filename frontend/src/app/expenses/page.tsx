@@ -9,10 +9,13 @@ import { Expense, ExpenseFilterParams } from "@/types/expense";
 import ExpenseFilters from "@/components/expenses/ExpenseFilters";
 import ExpenseList from "@/components/expenses/ExpenseList";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
+import QuickAddModal from "@/components/expenses/QuickAddModal";
+import { ReceiptScanModal } from "@/components/expenses/ReceiptScanModal";
 import CategoryManager from "@/components/categories/CategoryManager";
 import CurrencySelector from "@/components/common/CurrencySelector";
+import { KharchaGuruChat } from "@/components/ai/KharchaGuruChat";
 
-import { Plus, Tags, RefreshCw, Receipt } from "lucide-react";
+import { Plus, Tags, RefreshCw, Receipt, Sparkles, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -28,6 +31,9 @@ export default function ExpensesPage() {
   });
 
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [quickAddInitialData, setQuickAddInitialData] = useState<any>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedExpenseToEdit, setSelectedExpenseToEdit] = useState<Expense | null>(null);
 
@@ -110,6 +116,27 @@ export default function ExpensesPage() {
           </div>
 
           <button
+            onClick={() => setIsReceiptModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-teal-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
+            title="Scan Receipt with Multimodal Vision AI"
+          >
+            <Camera className="w-4 h-4 text-emerald-200" />
+            <span>AI Scan Receipt</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setQuickAddInitialData(null);
+              setIsQuickAddModalOpen(true);
+            }}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
+            title="Quick Add with Voice or Natural Language AI"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            <span>AI Quick Add</span>
+          </button>
+
+          <button
             onClick={handleCreateClick}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
           >
@@ -128,27 +155,25 @@ export default function ExpensesPage() {
           <button
             onClick={handleRefreshAll}
             disabled={isRefreshing}
-            className={`p-2 sm:p-2.5 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 rounded-xl active:scale-95 transition-all shadow-sm flex-shrink-0 ${
-              isRefreshing
-                ? "text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-wait"
-                : "text-gray-400 hover:text-white"
+            className={`p-2 bg-gray-900/80 hover:bg-gray-800 border border-gray-700/80 text-gray-200 rounded-xl active:scale-95 transition-all shadow-sm flex items-center justify-center min-h-[36px] min-w-[36px] ${
+              isRefreshing ? "cursor-wait opacity-80" : ""
             }`}
-            title="Refresh"
+            title="Refresh Table"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
+            <RefreshCw className={`w-4 h-4 text-emerald-400 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
 
-      {/* Multi-Filters Bar */}
+      {/* Filter Toolbar */}
       <ExpenseFilters
         filters={filters}
         categories={categories}
-        onChange={setFilters}
+        onChange={(newFilters) => setFilters(newFilters)}
         onReset={handleResetFilters}
       />
 
-      {/* Expense List */}
+      {/* Expense List Table */}
       <ExpenseList
         paginatedData={paginatedExpenses}
         loading={loadingExpenses}
@@ -158,13 +183,41 @@ export default function ExpensesPage() {
       />
 
       {/* Modals */}
+      {isReceiptModalOpen && (
+        <ReceiptScanModal
+          isOpen={isReceiptModalOpen}
+          onClose={() => setIsReceiptModalOpen(false)}
+          onExpenseCreated={handleRefreshAll}
+          onPreFillExpense={(parsedData) => {
+            setQuickAddInitialData(parsedData);
+            setSelectedExpenseToEdit(null);
+            setIsExpenseModalOpen(true);
+          }}
+        />
+      )}
+
+      {isQuickAddModalOpen && (
+        <QuickAddModal
+          isOpen={isQuickAddModalOpen}
+          onClose={() => setIsQuickAddModalOpen(false)}
+          onSuccess={handleRefreshAll}
+          onOpenFullFormWithData={(parsedData) => {
+            setQuickAddInitialData(parsedData);
+            setSelectedExpenseToEdit(null);
+            setIsExpenseModalOpen(true);
+          }}
+        />
+      )}
+
       {isExpenseModalOpen && (
         <ExpenseForm
           isOpen={isExpenseModalOpen}
           expenseToEdit={selectedExpenseToEdit}
+          initialData={quickAddInitialData}
           onClose={() => {
             setIsExpenseModalOpen(false);
             setSelectedExpenseToEdit(null);
+            setQuickAddInitialData(null);
           }}
           onSuccess={handleRefreshAll}
         />
@@ -177,6 +230,9 @@ export default function ExpensesPage() {
           onSuccess={handleRefreshAll}
         />
       )}
+
+      {/* Floating Kharcha Guru Chatbot */}
+      <KharchaGuruChat />
     </motion.div>
   );
 }
