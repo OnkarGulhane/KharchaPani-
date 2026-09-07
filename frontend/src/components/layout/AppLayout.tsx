@@ -19,35 +19,19 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   const isAuthPage = AUTH_PATHS.some((path) => pathname.startsWith(path));
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated && !isAuthPage) {
-        router.replace("/login");
-      } else if (isAuthenticated && isAuthPage) {
-        router.replace("/");
-      }
+    if (!isAuthenticated && !isAuthPage) {
+      router.replace("/login");
+    } else if (isAuthenticated && isAuthPage) {
+      router.replace("/");
     }
-  }, [isAuthenticated, isLoading, isAuthPage, router]);
+  }, [isAuthenticated, isAuthPage, router]);
 
   if (isAuthPage) {
     return <>{children}</>;
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-slate-300 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
-        <p className="text-sm font-medium text-slate-400">Loading your Kharcha Pani workspace...</p>
-      </div>
-    );
-  }
-
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-slate-300 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
-        <p className="text-sm font-medium text-slate-400">Redirecting to login...</p>
-      </div>
-    );
+    return null;
   }
 
   return (

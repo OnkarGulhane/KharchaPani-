@@ -22,16 +22,49 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getInitialUser = (): User | null => {
+  if (typeof window !== "undefined") {
+    try {
+      const u = localStorage.getItem("kharcha_user");
+      return u ? JSON.parse(u) : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+const getInitialToken = (): string | null => {
+  if (typeof window !== "undefined") {
+    try {
+      return (
+        sessionStorage.getItem("kharcha_access_token") ||
+        localStorage.getItem("kharcha_access_token_fallback")
+      );
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessTokenState] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<User | null>(getInitialUser);
+  const [accessToken, setAccessTokenState] = useState<string | null>(getInitialToken);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
 
   const handleSetSession = (token: string, userData: User, refreshToken?: string | null) => {
     setAccessToken(token);
     setAccessTokenState(token);
     setUser(userData);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("kharcha_user", JSON.stringify(userData));
+      } catch {
+        // Ignore quota errors
+      }
+    }
     if (refreshToken) {
       setRefreshToken(refreshToken);
     }
@@ -42,43 +75,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRefreshToken(null);
     setAccessTokenState(null);
     setUser(null);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("kharcha_user");
+        sessionStorage.removeItem("kharcha_access_token");
+        localStorage.removeItem("kharcha_access_token_fallback");
+        localStorage.removeItem("kharcha_refresh_token");
+      } catch {
+        // Ignore errors
+      }
+    }
   };
 
-  // Initial silent auth check on mount (optimized for Chrome, mobile & all browsers)
+  // Background non-blocking session check on mount
   useEffect(() => {
     let isMounted = true;
 
-    const initAuth = async () => {
-      // Safety timeout: Never keep the user on loading screen for more than 2.5 seconds
-      const timeoutId = setTimeout(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }, 2500);
-
+    const verifySession = async () => {
       try {
         const storedToken =
-          typeof window !== "undefined"
-            ? sessionStorage.getItem("kharcha_access_token") ||
-              localStorage.getItem("kharcha_access_token_fallback")
-            : null;
+          sessionStorage.getItem("kharcha_access_token") ||
+          localStorage.getItem("kharcha_access_token_fallback");
 
-        const storedRefresh =
-          typeof window !== "undefined"
-            ? localStorage.getItem("kharcha_refresh_token")
-            : null;
+        const storedRefresh = localStorage.getItem("kharcha_refresh_token");
 
-        // If no tokens exist at all on device, finish loading instantly (0ms delay)
         if (!storedToken && !storedRefresh) {
           if (isMounted) {
             handleClearSession();
-            setIsLoading(false);
-            clearTimeout(timeoutId);
-            return;
           }
+          return;
         }
 
-        // If we have an access token stored, verify it directly
+        // If access token exists, verify it
         if (storedToken) {
           try {
             setAccessToken(storedToken);
@@ -86,16 +114,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userData = await authApi.getMe();
             if (isMounted) {
               setUser(userData);
-              setIsLoading(false);
-              clearTimeout(timeoutId);
+              localStorage.setItem("kharcha_user", JSON.stringify(userData));
               return;
             }
           } catch {
-            // Access token expired, attempt refresh below
+            // Token expired, attempt refresh below
           }
         }
 
-        // Silent refresh attempt via stored refresh token or HttpOnly cookie
+        // Silent refresh attempt
         if (storedRefresh) {
           try {
             const refreshData = await authApi.refresh();
@@ -108,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const userData = await authApi.getMe();
               if (isMounted) {
                 setUser(userData);
+                localStorage.setItem("kharcha_user", JSON.stringify(userData));
               }
             }
           } catch {
@@ -120,19 +148,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             handleClearSession();
           }
         }
-      } catch (err) {
+      } catch {
         if (isMounted) {
           handleClearSession();
-        }
-      } finally {
-        if (isMounted) {
-          clearTimeout(timeoutId);
-          setIsLoading(false);
         }
       }
     };
 
-    initAuth();
+    verifySession();
 
     return () => {
       isMounted = false;
