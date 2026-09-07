@@ -53,7 +53,7 @@ class DashboardService:
         # Recent 5 expenses
         recent_stmt = (
             select(Expense, Category.name.label("category_name"))
-            .join(Category, Expense.category_id == Category.id)
+            .outerjoin(Category, Expense.category_id == Category.id)
             .where(Expense.user_id == user_id)
             .order_by(desc(Expense.date), desc(Expense.id))
             .limit(5)

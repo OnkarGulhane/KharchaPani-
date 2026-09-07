@@ -65,6 +65,15 @@ export async function chatWithKharchaGuru(data: AIChatRequest): Promise<AIChatRe
 }
 
 /**
+ * Dispatch global event to open Kharcha Guru AI chat drawer.
+ */
+export function openKharchaGuru(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("open-kharcha-guru"));
+  }
+}
+
+/**
  * Fetch detected recurring subscriptions and EMI obligations.
  */
 export async function getSubscriptions(): Promise<SubscriptionsResponse> {

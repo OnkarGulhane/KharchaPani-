@@ -50,7 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initAuth = async () => {
       try {
-        const storedToken = typeof window !== "undefined" ? sessionStorage.getItem("kharcha_access_token") : null;
+        const storedToken =
+          typeof window !== "undefined"
+            ? sessionStorage.getItem("kharcha_access_token") ||
+              localStorage.getItem("kharcha_access_token_fallback")
+            : null;
 
         // If we have an access token stored, verify it directly
         if (storedToken) {

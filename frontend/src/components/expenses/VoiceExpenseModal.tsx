@@ -36,6 +36,7 @@ export function VoiceExpenseModal({
 }: VoiceExpenseModalProps) {
   const [selectedLang, setSelectedLang] = useState<"mr-IN" | "hi-IN" | "en-IN">("mr-IN");
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [speechSupported, setSpeechSupported] = useState<boolean>(true);
   const [transcript, setTranscript] = useState<string>("");
   const [isParsing, setIsParsing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -48,6 +49,7 @@ export function VoiceExpenseModal({
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
+        setSpeechSupported(true);
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
@@ -68,6 +70,9 @@ export function VoiceExpenseModal({
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition error:", event.error);
           setIsListening(false);
+          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+            toast.error("Microphone permission denied. Please allow microphone or select a quick example below.");
+          }
         };
 
         recognition.onend = () => {
@@ -75,13 +80,15 @@ export function VoiceExpenseModal({
         };
 
         recognitionRef.current = recognition;
+      } else {
+        setSpeechSupported(false);
       }
     }
   }, [selectedLang]);
 
   const toggleListening = () => {
-    if (!recognitionRef.current) {
-      toast.error("Speech recognition is not supported in this browser. You can type your sentence below.");
+    if (!speechSupported || !recognitionRef.current) {
+      toast.info("Voice speech recognition is not supported in this browser environment. You can type or tap an example below.");
       return;
     }
 
@@ -103,10 +110,15 @@ export function VoiceExpenseModal({
   };
 
   const handleParseTranscript = async (textToParse?: string) => {
-    const text = textToParse || transcript;
-    if (!text.trim()) {
+    const text = (textToParse || transcript).trim();
+    if (!text) {
       toast.error("Please speak or enter a voice phrase first.");
       return;
+    }
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
     }
 
     setIsParsing(true);
@@ -238,13 +250,35 @@ export function VoiceExpenseModal({
             </p>
 
             {/* Example prompt hints */}
-            <p className="mt-1 text-[11px] text-gray-500 text-center max-w-xs italic">
+            <p className="mt-1 text-[11px] text-gray-400 text-center max-w-xs">
               {selectedLang === "mr-IN"
-                ? "उदा: 'काल भाजी मंडई मध्ये ४५० रुपये कॅश दिले'"
+                ? "किंवा खालील उदाहरणावर टॅप करा:"
                 : selectedLang === "hi-IN"
-                ? "उदा: 'दोस्तों के साथ खाना खाया १५०० रुपये गूगल पे से'"
-                : "e.g. 'Coffee 150 UPI with Rahul yesterday'"}
+                ? "या नीचे दिए गए उदाहरण पर टैप करें:"
+                : "Or tap an example prompt below:"}
             </p>
+
+            {/* Quick Suggestion Chips */}
+            <div className="mt-2.5 flex flex-wrap gap-1.5 justify-center max-w-md">
+              {(selectedLang === "mr-IN"
+                ? ["चहा नाश्ता ६० UPI", "काल पेट्रोल ५०० कॅश", "किराणा १४५० UPI", "भाजीपाला ३५०"]
+                : selectedLang === "hi-IN"
+                ? ["चाय नाश्ता ६० UPI", "कल पेट्रोल ५०० कैश", "किराना १४५० UPI", "खाना ४५०"]
+                : ["Coffee 180 UPI", "Uber 240 cash", "Groceries 1450 UPI", "Netflix 499 card"]
+              ).map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    setTranscript(chip);
+                    handleParseTranscript(chip);
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-200 active:scale-95 transition-all shadow-sm"
+                >
+                  ⚡ {chip}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Live Transcript Box */}

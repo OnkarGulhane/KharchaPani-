@@ -11,8 +11,10 @@ export const setAccessToken = (token: string | null): void => {
     try {
       if (token) {
         sessionStorage.setItem("kharcha_access_token", token);
+        localStorage.setItem("kharcha_access_token_fallback", token);
       } else {
         sessionStorage.removeItem("kharcha_access_token");
+        localStorage.removeItem("kharcha_access_token_fallback");
       }
     } catch {
       // Ignore quota/private mode errors
@@ -24,7 +26,9 @@ export const getAccessToken = (): string | null => {
   if (inMemoryAccessToken) return inMemoryAccessToken;
   if (typeof window !== "undefined") {
     try {
-      return sessionStorage.getItem("kharcha_access_token");
+      const sessionTok = sessionStorage.getItem("kharcha_access_token");
+      if (sessionTok) return sessionTok;
+      return localStorage.getItem("kharcha_access_token_fallback");
     } catch {
       return null;
     }

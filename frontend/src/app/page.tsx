@@ -32,7 +32,7 @@ import { BudgetBurnForecastModal } from "@/components/dashboard/BudgetBurnForeca
 import { ExpenseSentimentModal } from "@/components/dashboard/ExpenseSentimentModal";
 import { VoiceExpenseModal } from "@/components/expenses/VoiceExpenseModal";
 import { ReceiptScanModal } from "@/components/expenses/ReceiptScanModal";
-import { KharchaGuruChat } from "@/components/ai/KharchaGuruChat";
+import { openKharchaGuru } from "@/lib/api/ai";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
 import QuickAddModal from "@/components/expenses/QuickAddModal";
 import BudgetForm from "@/components/budget/BudgetForm";
@@ -229,6 +229,15 @@ export default function DashboardPage() {
           </button>
 
           <button
+            onClick={() => openKharchaGuru()}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-purple-600/20 hover:from-violet-600/30 hover:to-purple-600/30 border border-violet-500/40 text-violet-300 font-extrabold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
+            title="Ask Kharcha Guru AI Financial Advisor"
+          >
+            <span className="text-sm">🤖</span>
+            <span>Ask Guru</span>
+          </button>
+
+          <button
             onClick={() => setIsVoiceModalOpen(true)}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all"
             title="बोली खर्चा - Speak in Marathi, Hindi, or English"
@@ -298,6 +307,44 @@ export default function DashboardPage() {
             title="Refresh All Dashboard Data"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Quick Voice & AI Action Banner */}
+      <div className="md:hidden glass-panel p-3.5 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-indigo-500/10 flex items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-md flex-shrink-0">
+            <Mic className="w-5 h-5 animate-pulse" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-xs font-black text-white">बोली खर्चा & Guru AI</h3>
+            <p className="text-[10px] text-amber-200/80 truncate">मराठी, हिंदी किंवा इंग्रजीत बोला</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold text-xs shadow-md shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-1"
+          >
+            <span>बोला 🎙️</span>
+          </button>
+          <button
+            onClick={() => openKharchaGuru()}
+            className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold text-xs shadow-md shadow-indigo-500/25 active:scale-95 transition-all flex items-center gap-1"
+            title="Ask Kharcha Guru AI"
+          >
+            <span>Guru 🤖</span>
+          </button>
+          <button
+            onClick={() => {
+              setExpenseInitialData(null);
+              setIsQuickAddModalOpen(true);
+            }}
+            className="p-1.5 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold text-xs"
+            title="AI Quick Add"
+          >
+            <Sparkles className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -456,9 +503,6 @@ export default function DashboardPage() {
           onSuccess={handleRefreshAll}
         />
       )}
-
-      {/* Floating Kharcha Guru Chatbot */}
-      <KharchaGuruChat />
     </motion.div>
   );
 }

@@ -9,6 +9,7 @@ import CurrencySelector from "@/components/common/CurrencySelector";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import { usePWA } from "@/hooks/usePWA";
 import { useAuth } from "@/context/AuthContext";
+import { openKharchaGuru } from "@/lib/api/ai";
 
 export default function HamburgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +34,15 @@ export default function HamburgerMenu() {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => openKharchaGuru()}
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full bg-gradient-to-r from-violet-600/20 to-indigo-600/20 border border-violet-500/40 text-violet-300 text-xs font-bold hover:bg-violet-600/30 active:scale-95 transition-all shadow-sm"
+            title="Ask Kharcha Guru AI Financial Advisor"
+          >
+            <span className="text-xs">🤖</span>
+            <span>Guru</span>
+          </button>
+
           {!isInstalled && (
             <button
               onClick={() => promptInstall()}
@@ -143,6 +153,17 @@ export default function HamburgerMenu() {
                       </Link>
                     );
                   })}
+
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      openKharchaGuru();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-violet-300 bg-gradient-to-r from-violet-600/20 via-indigo-600/20 to-purple-600/20 hover:from-violet-600/30 hover:to-purple-600/30 border border-violet-500/30 transition-all shadow-sm"
+                  >
+                    <span className="text-base">🤖</span>
+                    <span>Ask Kharcha Guru AI</span>
+                  </button>
 
                   {!isInstalled && (
                     <button

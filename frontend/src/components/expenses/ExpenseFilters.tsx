@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Category } from "@/types/category";
 import { ExpenseFilterParams } from "@/types/expense";
-import { Search, Filter, Calendar, ArrowUpDown, X } from "lucide-react";
+import { Search, Filter, Calendar, ArrowUpDown, X, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Props {
   filters: ExpenseFilterParams;
@@ -13,6 +13,8 @@ interface Props {
 }
 
 export default function ExpenseFilters({ filters, categories, onChange, onReset }: Props) {
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ ...filters, search: e.target.value, page: 1 });
   };
@@ -40,20 +42,22 @@ export default function ExpenseFilters({ filters, categories, onChange, onReset 
     onChange({ ...filters, end_date: e.target.value || undefined, page: 1 });
   };
 
-  const hasActiveFilters =
-    filters.search ||
-    filters.category_id ||
-    filters.start_date ||
-    filters.end_date ||
-    filters.payment_mode ||
-    filters.sort_by !== "date" ||
-    filters.order !== "desc";
+  const activeFiltersCount = [
+    Boolean(filters.search),
+    Boolean(filters.category_id),
+    Boolean(filters.start_date),
+    Boolean(filters.end_date),
+    Boolean(filters.payment_mode),
+    filters.sort_by !== "date" || filters.order !== "desc",
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = activeFiltersCount > 0;
 
   return (
-    <div className="glass-panel p-4 rounded-2xl border border-gray-800 space-y-4 mb-6">
-      {/* Top Search & Reset Row */}
-      <div className="flex flex-col sm:flex-row items-center gap-3">
-        <div className="relative flex-1 w-full">
+    <div className="glass-panel p-3.5 sm:p-4 rounded-2xl border border-gray-800 space-y-3 mb-4">
+      {/* Top Search & Filter Toggle Row */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="relative flex-1 min-w-0">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -64,19 +68,43 @@ export default function ExpenseFilters({ filters, categories, onChange, onReset 
           />
         </div>
 
+        {/* Mobile Filter Toggle Button */}
+        <button
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className={`md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all flex-shrink-0 ${
+            showMobileFilters || hasActiveFilters
+              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+              : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:text-white"
+          }`}
+        >
+          <Filter className="w-3.5 h-3.5" />
+          <span>Filters</span>
+          {activeFiltersCount > 0 && (
+            <span className="w-4 h-4 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center">
+              {activeFiltersCount}
+            </span>
+          )}
+          {showMobileFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="flex items-center gap-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-xl transition-colors self-end sm:self-auto"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-xl transition-colors flex-shrink-0"
+            title="Reset all filters"
           >
             <X className="w-3.5 h-3.5" />
-            <span>Reset Filters</span>
+            <span>Reset</span>
           </button>
         )}
       </div>
 
-      {/* Multi-Filter Grid */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-3 border-t border-gray-800/60">
+      {/* Multi-Filter Grid: Collapsible on Mobile, always grid on desktop */}
+      <div
+        className={`${
+          showMobileFilters ? "grid" : "hidden md:grid"
+        } grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-3 border-t border-gray-800/60`}
+      >
         {/* Category */}
         <div>
           <label className="block text-[10px] font-bold uppercase text-gray-400 mb-1">Category</label>
@@ -147,6 +175,19 @@ export default function ExpenseFilters({ filters, categories, onChange, onReset 
             <option value="title:asc">Title (A-Z)</option>
           </select>
         </div>
+
+        {/* Mobile Reset button inside expanded area */}
+        {hasActiveFilters && (
+          <div className="xs:col-span-2 sm:hidden pt-1">
+            <button
+              onClick={onReset}
+              className="w-full flex items-center justify-center gap-1.5 py-2 bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs font-bold rounded-xl"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Reset All Filters</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

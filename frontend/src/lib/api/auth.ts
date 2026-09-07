@@ -1,4 +1,4 @@
-import { apiFetch, setAccessToken } from "@/lib/api/client";
+import { apiFetch, setAccessToken, getRefreshToken, setRefreshToken } from "@/lib/api/client";
 import { RefreshTokenResponse, TokenResponse, User } from "@/types/auth";
 
 export interface RegisterResult {
@@ -50,20 +50,28 @@ export const authApi = {
   },
 
   refresh: async (): Promise<RefreshTokenResponse> => {
+    const refreshToken = getRefreshToken();
     const res = await apiFetch<RefreshTokenResponse>("/auth/refresh", {
       method: "POST",
+      body: refreshToken ? JSON.stringify({ refresh_token: refreshToken }) : undefined,
     });
     setAccessToken(res.access_token);
+    if (res.refresh_token) {
+      setRefreshToken(res.refresh_token);
+    }
     return res;
   },
 
   logout: async (): Promise<void> => {
+    const refreshToken = getRefreshToken();
     try {
       await apiFetch<{ logged_out: boolean }>("/auth/logout", {
         method: "POST",
+        body: refreshToken ? JSON.stringify({ refresh_token: refreshToken }) : undefined,
       });
     } finally {
       setAccessToken(null);
+      setRefreshToken(null);
     }
   },
 

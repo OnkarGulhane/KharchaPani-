@@ -24,6 +24,12 @@ export const KharchaGuruChat: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener("open-kharcha-guru", handleOpen);
+    return () => window.removeEventListener("open-kharcha-guru", handleOpen);
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -81,27 +87,29 @@ export const KharchaGuruChat: React.FC = () => {
     <>
       {/* Floating Launcher Button */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-40 animate-bounce-subtle">
+        <div className="fixed bottom-24 right-3 sm:bottom-6 sm:right-6 z-50 animate-bounce-subtle pointer-events-auto">
           <button
             onClick={() => setIsOpen(true)}
-            className="group flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-2xl shadow-indigo-500/40 hover:scale-105 transition-all duration-300 border border-white/20"
+            id="ask-kharcha-guru-floating-btn"
+            className="group flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-2xl shadow-indigo-500/50 hover:scale-105 active:scale-95 transition-all duration-300 border border-white/30 backdrop-blur-md"
+            title="Ask Kharcha Guru AI Financial Advisor"
           >
             <div className="relative">
-              <span className="text-xl">🤖</span>
+              <span className="text-lg sm:text-xl">🤖</span>
               <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
             </div>
-            <span className="text-sm tracking-wide">Ask Kharcha Guru</span>
-            <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded-md font-mono">AI</span>
+            <span className="text-xs sm:text-sm tracking-wide font-bold">Ask Kharcha Guru</span>
+            <span className="px-1.5 py-0.5 text-[10px] bg-white/20 rounded-md font-mono hidden xs:inline">AI</span>
           </button>
         </div>
       )}
 
       {/* Floating Chat Drawer */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-full max-w-md h-[560px] bg-theme-surface/95 backdrop-blur-xl border border-theme-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed inset-x-2 bottom-20 top-auto sm:inset-x-auto sm:bottom-6 sm:right-6 z-50 w-auto sm:w-full max-w-md h-[520px] sm:h-[560px] max-h-[82vh] bg-theme-surface/98 backdrop-blur-2xl border border-theme-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
           {/* Header */}
           <div className="px-5 py-3.5 border-b border-theme-border bg-gradient-to-r from-indigo-600/15 via-violet-600/10 to-transparent flex items-center justify-between">
             <div className="flex items-center gap-3">

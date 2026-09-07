@@ -28,7 +28,7 @@ class ExpenseService:
         user_id: int = 1,
     ) -> PaginatedData[ExpenseResponse]:
         """Fetch paginated expenses with filters and sorting."""
-        query = select(Expense, Category.name.label("category_name")).join(
+        query = select(Expense, Category.name.label("category_name")).outerjoin(
             Category, Expense.category_id == Category.id
         ).where(Expense.user_id == user_id)
 

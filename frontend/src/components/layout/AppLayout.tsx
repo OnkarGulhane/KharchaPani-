@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/layout/Sidebar";
 import HamburgerMenu from "@/components/layout/HamburgerMenu";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import { KharchaGuruChat } from "@/components/ai/KharchaGuruChat";
 import { Loader2 } from "lucide-react";
 
 const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/access"];
@@ -54,6 +55,8 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
         </main>
       </div>
       <MobileBottomNav />
+      {/* Global Kharcha Guru AI Assistant */}
+      <KharchaGuruChat />
     </div>
   );
 };

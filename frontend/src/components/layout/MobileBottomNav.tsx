@@ -1,92 +1,167 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, Plus, Download, LogOut } from "lucide-react";
+import { LayoutDashboard, Receipt, Sparkles, Mic, Download, Plus, Bot } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePWA } from "@/hooks/usePWA";
-import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { VoiceExpenseModal } from "@/components/expenses/VoiceExpenseModal";
+import QuickAddModal from "@/components/expenses/QuickAddModal";
+import ExpenseForm from "@/components/expenses/ExpenseForm";
+import { openKharchaGuru } from "@/lib/api/ai";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const { isInstalled, promptInstall } = usePWA();
-  const { logout } = useAuth();
 
-  const navItems = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Expenses", href: "/expenses", icon: Receipt },
-  ];
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+  const [isExpenseFormOpen, setIsExpenseFormOpen] = useState(false);
+  const [expenseInitialData, setExpenseInitialData] = useState<any>(null);
+
+  const handleRefreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-charts"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-top-categories"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-average-spend"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-comparison"] });
+    queryClient.invalidateQueries({ queryKey: ["ai-recommendations"] });
+  };
+
+  const isDashboard = pathname === "/";
+  const isExpenses = pathname === "/expenses";
 
   return (
-    <nav
-      aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-2 bg-surface/90 backdrop-blur-xl border-t border-gray-800/80 shadow-2xl"
-    >
-      <div className="flex items-center justify-around max-w-md mx-auto">
-        {/* Dashboard & Expenses Links */}
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 ${
-                isActive ? "text-emerald-400 font-semibold" : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="activeMobileTab"
-                  className="absolute inset-0 bg-emerald-500/10 rounded-xl border border-emerald-500/20"
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-              <Icon className={`w-5 h-5 mb-0.5 relative z-10 ${isActive ? "text-emerald-400" : ""}`} />
-              <span className="text-[11px] relative z-10">{item.name}</span>
-            </Link>
-          );
-        })}
+    <>
+      <nav
+        aria-label="Mobile Navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-1.5 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-1.5 bg-[#0b1120]/95 backdrop-blur-2xl border-t border-slate-800 shadow-[0_-8px_30px_rgba(0,0,0,0.6)]"
+      >
+        <div className="flex items-center justify-around max-w-lg mx-auto">
+          {/* Dashboard Link */}
+          <Link
+            href="/"
+            className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-2xl transition-all duration-200 ${
+              isDashboard ? "text-emerald-400 font-bold" : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            {isDashboard && (
+              <motion.div
+                layoutId="activeMobileTab"
+                className="absolute inset-0 bg-emerald-500/15 rounded-xl border border-emerald-500/30"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <LayoutDashboard className={`w-5 h-5 mb-0.5 relative z-10 ${isDashboard ? "text-emerald-400" : ""}`} />
+            <span className="text-[10px] relative z-10">Dashboard</span>
+          </Link>
 
-        {/* Center Quick Action (+ Expense) */}
-        <Link
-          href="/expenses"
-          className="relative -top-3 flex flex-col items-center group"
-          aria-label="Add Expense"
-        >
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 text-white active:scale-95 transition-transform duration-150 border-2 border-background">
-            <Plus className="w-6 h-6 stroke-[2.5]" />
-          </div>
-          <span className="text-[10px] font-medium text-emerald-400 mt-0.5">Quick Add</span>
-        </Link>
+          {/* Expenses Link */}
+          <Link
+            href="/expenses"
+            className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-2xl transition-all duration-200 ${
+              isExpenses ? "text-emerald-400 font-bold" : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            {isExpenses && (
+              <motion.div
+                layoutId="activeMobileTab"
+                className="absolute inset-0 bg-emerald-500/15 rounded-xl border border-emerald-500/30"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <Receipt className={`w-5 h-5 mb-0.5 relative z-10 ${isExpenses ? "text-emerald-400" : ""}`} />
+            <span className="text-[10px] relative z-10">Expenses</span>
+          </Link>
 
-        {/* Sign Out Button */}
-        <button
-          onClick={() => logout()}
-          className="relative flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-gray-400 hover:text-rose-400 transition-colors"
-          title="Sign Out"
-        >
-          <LogOut className="w-5 h-5 mb-0.5 relative z-10" />
-          <span className="text-[11px] relative z-10">Sign Out</span>
-        </button>
-
-        {/* Install Button (Only if not already installed) */}
-        {!isInstalled && (
+          {/* Center Floating Action: बोली खर्चा (Voice AI) */}
           <button
-            onClick={() => promptInstall()}
-            className="flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl text-emerald-400 hover:text-emerald-300 transition-colors"
-            title="Install App"
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="relative -top-3.5 flex flex-col items-center group focus:outline-none"
+            aria-label="बोली खर्चा - Voice AI Expense"
+          >
+            <div className="relative flex items-center justify-center">
+              <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 opacity-70 blur-sm group-hover:opacity-100 transition duration-300 animate-pulse" />
+              <div className="relative w-13 h-13 p-3 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-600 flex items-center justify-center shadow-xl shadow-amber-500/30 text-white active:scale-90 transition-transform duration-150 border-2 border-[#0b1120]">
+                <Mic className="w-6 h-6 animate-pulse stroke-[2.5]" />
+              </div>
+            </div>
+            <span className="text-[10px] font-black text-amber-300 mt-0.5 tracking-tight drop-shadow">
+              बोली खर्चा
+            </span>
+          </button>
+
+          {/* Kharcha Guru AI Chatbot Trigger Tab */}
+          <button
+            onClick={() => openKharchaGuru()}
+            className="relative flex flex-col items-center justify-center py-1 px-2 rounded-2xl text-violet-300 hover:text-violet-100 active:scale-95 transition-all"
+            title="Ask Kharcha Guru AI"
+          >
+            <div className="relative flex items-center justify-center">
+              <span className="text-lg mb-0.5 animate-bounce-subtle">🤖</span>
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-violet-400 animate-ping" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-violet-400" />
+            </div>
+            <span className="text-[10px] font-extrabold text-violet-300">खर्चा Guru</span>
+          </button>
+
+          {/* AI Quick Add Button */}
+          <button
+            onClick={() => {
+              setExpenseInitialData(null);
+              setIsQuickAddModalOpen(true);
+            }}
+            className="relative flex flex-col items-center justify-center py-1 px-2 rounded-2xl text-purple-300 hover:text-purple-200 active:scale-95 transition-all"
+            title="AI Quick Add"
           >
             <div className="relative">
-              <Download className="w-5 h-5 mb-0.5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
+              <Sparkles className="w-5 h-5 mb-0.5 text-purple-400 animate-pulse" />
             </div>
-            <span className="text-[10px] font-semibold">Install</span>
+            <span className="text-[10px] font-bold text-purple-300">Quick Add</span>
           </button>
-        )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+
+      {/* Global Mobile Modals triggered from bottom bar */}
+      {isVoiceModalOpen && (
+        <VoiceExpenseModal
+          isOpen={isVoiceModalOpen}
+          onClose={() => setIsVoiceModalOpen(false)}
+          onExpenseCreated={handleRefreshAll}
+          onOpenFullForm={(parsedData) => {
+            setExpenseInitialData(parsedData);
+            setIsExpenseFormOpen(true);
+          }}
+        />
+      )}
+
+      {isQuickAddModalOpen && (
+        <QuickAddModal
+          isOpen={isQuickAddModalOpen}
+          onClose={() => setIsQuickAddModalOpen(false)}
+          onSuccess={handleRefreshAll}
+          onOpenFullFormWithData={(parsedData) => {
+            setExpenseInitialData(parsedData);
+            setIsExpenseFormOpen(true);
+          }}
+        />
+      )}
+
+      {isExpenseFormOpen && (
+        <ExpenseForm
+          isOpen={isExpenseFormOpen}
+          initialData={expenseInitialData}
+          onClose={() => {
+            setIsExpenseFormOpen(false);
+            setExpenseInitialData(null);
+          }}
+          onSuccess={handleRefreshAll}
+        />
+      )}
+    </>
   );
 }

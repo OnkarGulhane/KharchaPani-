@@ -8,6 +8,7 @@ import CurrencySelector from "@/components/common/CurrencySelector";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import { usePWA } from "@/hooks/usePWA";
 import { useAuth } from "@/context/AuthContext";
+import { openKharchaGuru } from "@/lib/api/ai";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -84,6 +85,15 @@ export default function Sidebar() {
               </Link>
             );
           })}
+
+          <button
+            onClick={() => openKharchaGuru()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-violet-300 bg-gradient-to-r from-violet-600/15 via-indigo-600/15 to-purple-600/15 hover:from-violet-600/25 hover:to-purple-600/25 border border-violet-500/30 transition-all duration-200 shadow-sm"
+            title="Ask Kharcha Guru AI"
+          >
+            <span className="text-base">🤖</span>
+            <span>Ask Kharcha Guru</span>
+          </button>
 
           {!isInstalled && (
             <button

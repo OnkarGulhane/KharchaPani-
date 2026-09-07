@@ -10,12 +10,12 @@ import ExpenseFilters from "@/components/expenses/ExpenseFilters";
 import ExpenseList from "@/components/expenses/ExpenseList";
 import ExpenseForm from "@/components/expenses/ExpenseForm";
 import QuickAddModal from "@/components/expenses/QuickAddModal";
+import { VoiceExpenseModal } from "@/components/expenses/VoiceExpenseModal";
 import { ReceiptScanModal } from "@/components/expenses/ReceiptScanModal";
 import CategoryManager from "@/components/categories/CategoryManager";
 import CurrencySelector from "@/components/common/CurrencySelector";
-import { KharchaGuruChat } from "@/components/ai/KharchaGuruChat";
 
-import { Plus, Tags, RefreshCw, Receipt, Sparkles, Camera } from "lucide-react";
+import { Plus, Tags, RefreshCw, Receipt, Sparkles, Camera, Mic } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -31,6 +31,7 @@ export default function ExpensesPage() {
   });
 
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [quickAddInitialData, setQuickAddInitialData] = useState<any>(null);
@@ -116,12 +117,12 @@ export default function ExpensesPage() {
           </div>
 
           <button
-            onClick={() => setIsReceiptModalOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-teal-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
-            title="Scan Receipt with Multimodal Vision AI"
+            onClick={() => setIsVoiceModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-rose-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-extrabold text-xs rounded-xl shadow-md shadow-amber-500/10 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
+            title="बोली खर्चा - Voice-to-Expense in Marathi, Hindi, or English"
           >
-            <Camera className="w-4 h-4 text-emerald-200" />
-            <span>AI Scan Receipt</span>
+            <Mic className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span>बोली खर्चा</span>
           </button>
 
           <button
@@ -134,6 +135,15 @@ export default function ExpensesPage() {
           >
             <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
             <span>AI Quick Add</span>
+          </button>
+
+          <button
+            onClick={() => setIsReceiptModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-teal-500/20 active:scale-95 transition-all whitespace-nowrap min-h-[36px]"
+            title="Scan Receipt with Multimodal Vision AI"
+          >
+            <Camera className="w-4 h-4 text-emerald-200" />
+            <span>AI Scan Receipt</span>
           </button>
 
           <button
@@ -183,6 +193,18 @@ export default function ExpensesPage() {
       />
 
       {/* Modals */}
+      {isVoiceModalOpen && (
+        <VoiceExpenseModal
+          isOpen={isVoiceModalOpen}
+          onClose={() => setIsVoiceModalOpen(false)}
+          onExpenseCreated={handleRefreshAll}
+          onOpenFullForm={(parsedData) => {
+            setQuickAddInitialData(parsedData);
+            setSelectedExpenseToEdit(null);
+            setIsExpenseModalOpen(true);
+          }}
+        />
+      )}
       {isReceiptModalOpen && (
         <ReceiptScanModal
           isOpen={isReceiptModalOpen}
@@ -230,9 +252,6 @@ export default function ExpensesPage() {
           onSuccess={handleRefreshAll}
         />
       )}
-
-      {/* Floating Kharcha Guru Chatbot */}
-      <KharchaGuruChat />
     </motion.div>
   );
 }
