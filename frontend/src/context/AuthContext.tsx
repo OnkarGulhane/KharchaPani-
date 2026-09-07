@@ -22,35 +22,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getInitialUser = (): User | null => {
-  if (typeof window !== "undefined") {
-    try {
-      const u = localStorage.getItem("kharcha_user");
-      return u ? JSON.parse(u) : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-};
-
-const getInitialToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    try {
-      return (
-        sessionStorage.getItem("kharcha_access_token") ||
-        localStorage.getItem("kharcha_access_token_fallback")
-      );
-    } catch {
-      return null;
-    }
-  }
-  return null;
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(getInitialUser);
-  const [accessToken, setAccessTokenState] = useState<string | null>(getInitialToken);
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
 
@@ -90,6 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Background non-blocking session check on mount
   useEffect(() => {
     let isMounted = true;
+
+    // Load cached session immediately on client mount
+    try {
+      const cached = localStorage.getItem("kharcha_user");
+      if (cached) {
+        setUser(JSON.parse(cached));
+      }
+      const tok =
+        sessionStorage.getItem("kharcha_access_token") ||
+        localStorage.getItem("kharcha_access_token_fallback");
+      if (tok) {
+        setAccessTokenState(tok);
+        setAccessToken(tok);
+      }
+    } catch {
+      // Ignore
+    }
 
     const verifySession = async () => {
       try {

@@ -1,37 +1,47 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/layout/Sidebar";
 import HamburgerMenu from "@/components/layout/HamburgerMenu";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { KharchaGuruChat } from "@/components/ai/KharchaGuruChat";
-import { Loader2 } from "lucide-react";
 
 const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/access"];
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [hasMounted, setHasMounted] = useState(false);
 
   const isAuthPage = AUTH_PATHS.some((path) => pathname.startsWith(path));
 
   useEffect(() => {
-    if (!isAuthenticated && !isAuthPage) {
-      router.replace("/login");
-    } else if (isAuthenticated && isAuthPage) {
-      router.replace("/");
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hasMounted) {
+      if (!isAuthenticated && !isAuthPage) {
+        router.replace("/login");
+      } else if (isAuthenticated && isAuthPage) {
+        router.replace("/");
+      }
     }
-  }, [isAuthenticated, isAuthPage, router]);
+  }, [hasMounted, isAuthenticated, isAuthPage, router]);
 
   if (isAuthPage) {
     return <>{children}</>;
   }
 
-  if (!isAuthenticated) {
-    return null;
+  if (!hasMounted || !isAuthenticated) {
+    return (
+      <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin" />
+      </div>
+    );
   }
 
   return (
