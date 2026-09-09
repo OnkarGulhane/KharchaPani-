@@ -1,8 +1,8 @@
 # Kharcha Pani — Project Progress Report
 
-**Date:** September 8, 2026  
-**Active Architecture Version:** v4.2 (Native Android Kotlin + Jetpack Compose, Render Cloud Production API, AI Financial Intelligence Suite, Universal Mobile Navigation, Zero-Latency Instant Hydration, Local & Cloud Multi-Device Access)  
-**Status:** Native Android App Complete & Verified on Physical Device (100%), Render Cloud Production Connected (100%), Backend Complete (100%), AI Financial Suite v4.0 Complete (100%), Mobile Bottom Nav & Kharcha Guru Global Access Complete (100%), Voice AI ("बोली खर्चा") Complete (100%), Pytest Test Suite 72/72 Passed (100%), Frontend Next.js Production Build 13/13 Pages Verified (100%).
+**Date:** September 9, 2026  
+**Active Architecture Version:** v4.3 (Native Android Kotlin + Jetpack Compose, 1-Tap Google Sign-In via Credential Manager, Synchronized AI Financial Intelligence Suite, Render Cloud Production API, Paginated Data Models)  
+**Status:** Native Android App Complete & Verified on Physical Device (100%), 1-Tap Google Sign-In Active & Verified (100%), AI Financial Suite (Kharcha Guru, बोली खर्चा, Analytics) Synchronized & Verified (100%), Expense CRUD & Paginated Dashboard Active (100%), Render Cloud Production Connected (100%), Git Repository Committed & Pushed to GitHub (100%).
 
 ---
 
@@ -101,15 +101,32 @@ A 100% Native Android client has been architected, built, and verified on a phys
 
 - **Android Native Codebase (`android/`):**
   - Navigation: `android/app/src/main/java/com/kharchapani/app/ui/navigation/AppNavHost.kt`
-  - Auth Screens: `.../ui/auth/LoginScreen.kt`, `.../ui/auth/RegisterScreen.kt`
+  - Auth Screens: `.../ui/auth/LoginScreen.kt`, `.../ui/auth/RegisterScreen.kt`, `.../data/api/GoogleAuthHelper.kt`
   - Dashboard: `.../ui/dashboard/DashboardScreen.kt`
   - Expenses: `.../ui/expenses/ExpenseListScreen.kt`, `.../ui/expenses/AddExpenseSheet.kt`, `.../ui/expenses/VoiceExpenseDialog.kt`
   - AI & Analytics: `.../ui/guru/KharchaGuruScreen.kt`, `.../ui/analytics/AnalyticsScreen.kt`
   - Settings: `.../ui/settings/SettingsScreen.kt`
-  - Network & Core: `.../data/api/ApiClient.kt`, `.../data/api/AuthInterceptor.kt`, `.../data/api/NetworkErrorParser.kt`, `.../data/preferences/SessionManager.kt`
+  - Network & Core: `.../data/api/ApiClient.kt`, `.../data/api/ApiService.kt`, `.../data/api/AuthInterceptor.kt`, `.../data/api/NetworkErrorParser.kt`, `.../data/preferences/SessionManager.kt`
   - Receiver: `.../receiver/BankSmsReceiver.kt`
   - Toolchain: `android/tools/` (Android SDK 34, Build-Tools 34.0.0, Gradle 8.7, scrcpy)
 - **Web & Backend (`frontend/` & `backend/`):**
   - Cloud URL Config: `frontend/src/config/env.ts`
   - Backend Routers: `backend/app/routers/` (auth, ai, dashboard, expenses, categories, budget, health)
   - Memory & Progress: `docs/progress.md`, `repomemory.md`
+
+---
+
+## 🚀 8. Recent Milestones & Resolved Issues (September 9, 2026)
+
+1. **Google Sign-In & Developer Error 10 Elimination:**
+   - Standardized Google Web Client ID (`604011563193-ft5ril7p9cv01jtaldutqn5gplvpadn2.apps.googleusercontent.com`) across Android, Web, and FastAPI Backend.
+   - Built Android Credential Manager integration in `GoogleAuthHelper.kt` with `GetGoogleIdOption`.
+2. **Dashboard & Expense Persistence Fixes:**
+   - Resolved `java.lang.IllegalStateException` on Dashboard by handling paginated backend data (`PaginatedData<T>`) in `ApiService.kt` and `ExpenseModels.kt`.
+   - Fixed expense creation (`POST /api/v1/expenses`) by ensuring non-null `title`, `amount`, `date` (YYYY-MM-DD), and `category_id` in `ExpenseViewModel.kt` and `AddExpenseSheet.kt`.
+3. **AI Suite Full Synchronization:**
+   - Fixed REST endpoint paths in `ApiService.kt`: `@GET("ai/expense-sentiment")` and `@GET("ai/budget-forecast")`.
+   - Rebuilt `AiModels.kt` to match backend FastAPI Pydantic schemas (`AIChatResponse`, `AIQuickParseResponse`, `FinancialHealthResponse`, `BudgetForecastResponse`, `ExpenseSentimentResponse`) with backward-compatible getter fallbacks.
+4. **Git Repository Commit & Push:**
+   - Staged and committed clean Android source code, build scripts, backend auth improvements, and tests (`Commit 296f764`).
+   - Successfully pushed branch `feature/backend-database-setup` to GitHub origin.
