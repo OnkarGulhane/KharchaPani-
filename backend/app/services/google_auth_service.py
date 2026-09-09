@@ -98,6 +98,30 @@ class GoogleAuthService:
         except Exception:
             pass
 
+        # 4. Exchange Auth Code if serverAuthCode was passed
+        try:
+            client = get_google_http_client()
+            token_res = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": token_str,
+                    "client_id": client_id,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "",
+                },
+            )
+            if token_res.status_code == 200:
+                token_data = token_res.json()
+                id_tok = token_data.get("id_token")
+                acc_tok = token_data.get("access_token")
+                if id_tok:
+                    return await GoogleAuthService.verify_google_token_async(id_tok)
+                if acc_tok:
+                    return await GoogleAuthService.verify_google_token_async(acc_tok)
+        except Exception:
+            pass
+
         # 4. Fallback for non-standard JWT tokens
         if not is_jwt_id_token and token_str.count(".") == 2:
             try:

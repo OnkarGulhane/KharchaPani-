@@ -85,7 +85,7 @@ class AuthService:
             hashed_password=hashed_password,
             full_name=data.full_name.strip(),
             is_active=True,
-            is_verified=False,
+            is_verified=True,
         )
         db.add(new_user)
         await db.commit()

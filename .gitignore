@@ -9,5 +9,20 @@ Thumbs.db
 
 # Python / Node
 __pycache__/
+*.pyc
+*.pyo
 node_modules/
 .next/
+.pytest_cache/
+
+# Android Build Exclusions
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/tools/
+android/*.apk
+android/*.png
+android/*.bat
+*.iml
+.idea/
