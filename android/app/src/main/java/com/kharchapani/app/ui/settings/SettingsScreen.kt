@@ -1,23 +1,29 @@
 package com.kharchapani.app.ui.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kharchapani.app.data.preferences.SessionManager
 import com.kharchapani.app.theme.*
+import com.kharchapani.app.ui.components.GlassmorphicCard
+import com.kharchapani.app.ui.components.ObsidianAtmosphere
 import com.kharchapani.app.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,214 +41,313 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings & Device Config ⚙️", fontWeight = FontWeight.Bold, color = TextPrimary) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ObsidianBlack)
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .shadow(8.dp, shape = RoundedCornerShape(12.dp), spotColor = Color(0xFF8B5CF6))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
+                                    )
+                                )
+                                .border(BorderStroke(1.dp, Color(0x60FFFFFF)), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = "Settings",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Settings & Config",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "System & Security Preferences",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFFD0BCFF),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = ObsidianCanvas)
             )
         },
-        containerColor = ObsidianBlack
+        containerColor = ObsidianCanvas
     ) { paddingValues ->
-        Column(
+        ObsidianAtmosphere(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // User Profile Info Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // 1. User Profile Info Card
+                GlassmorphicCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    backgroundColor = Color(0xF2181D2C),
+                    spotColor = Color(0x406366F1),
+                    elevation = 10.dp
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = Emerald400, modifier = Modifier.size(32.dp))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = currentUser?.fullName ?: "KharchaPani User",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = currentUser?.email ?: "user@example.com",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-            }
-
-            // Server Backend URL Configuration Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Dns, contentDescription = "Server", tint = Emerald400)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Backend Server URL", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    }
-                    Text(
-                        text = "Choose a preset or enter a custom backend API endpoint:",
-                        fontSize = 12.sp,
-                        color = TextMuted,
-                        modifier = Modifier.padding(vertical = 6.dp)
-                    )
-
-                    // Quick Preset Buttons
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(18.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
-                            onClick = {
-                                currentBaseUrl = SessionManager.RENDER_BASE_URL
-                                sessionManager.setBaseUrl(SessionManager.RENDER_BASE_URL)
-                                showUrlSavedToast = true
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (currentBaseUrl.contains("onrender.com")) Emerald500.copy(alpha = 0.15f) else Color.Transparent
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(
-                                brush = androidx.compose.ui.graphics.SolidColor(if (currentBaseUrl.contains("onrender.com")) Emerald500 else CardBorder)
-                            )
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .shadow(8.dp, shape = CircleShape, spotColor = Color(0xFF8B5CF6))
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF8B5CF6)))
+                                )
+                                .border(BorderStroke(1.5.dp, Color(0x80FFFFFF)), CircleShape),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("☁️ Render API", fontSize = 12.sp, color = TextPrimary)
+                            Text(
+                                text = (currentUser?.fullName?.take(1) ?: "O").uppercase(),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
-
-                        OutlinedButton(
-                            onClick = {
-                                currentBaseUrl = SessionManager.LOCAL_BASE_URL
-                                sessionManager.setBaseUrl(SessionManager.LOCAL_BASE_URL)
-                                showUrlSavedToast = true
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (currentBaseUrl.contains("10.242")) Emerald500.copy(alpha = 0.15f) else Color.Transparent
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(
-                                brush = androidx.compose.ui.graphics.SolidColor(if (currentBaseUrl.contains("10.242")) Emerald500 else CardBorder)
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                text = currentUser?.fullName ?: "KharchaPani User",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
                             )
-                        ) {
-                            Text("💻 Local Wi-Fi", fontSize = 12.sp, color = TextPrimary)
+                            Text(
+                                text = currentUser?.email ?: "user@kharchapani.app",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFD0BCFF)
+                            )
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    OutlinedTextField(
-                        value = currentBaseUrl,
-                        onValueChange = { currentBaseUrl = it },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedBorderColor = Emerald500,
-                            unfocusedBorderColor = CardBorder,
-                            focusedContainerColor = ObsidianDark,
-                            unfocusedContainerColor = ObsidianDark
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Button(
-                        onClick = {
-                            sessionManager.setBaseUrl(currentBaseUrl)
-                            showUrlSavedToast = true
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.align(Alignment.End)
+                // 2. Server Backend URL Configuration Card
+                GlassmorphicCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    backgroundColor = Color(0xF2181D2C),
+                    spotColor = Color(0x336366F1),
+                    elevation = 8.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text("Save URL", color = ObsidianBlack, fontWeight = FontWeight.SemiBold)
-                    }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0x336366F1)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Dns,
+                                    contentDescription = "Server",
+                                    tint = Color(0xFFD0BCFF),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Text(
+                                text = "Backend Server API Endpoint",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
 
-                    if (showUrlSavedToast) {
-                        Text(
-                            text = "✓ Server URL updated successfully!",
-                            color = Emerald400,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 4.dp)
+                        // Presets Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                "Render Cloud" to "https://kharchapani-0lon.onrender.com/api/v1/",
+                                "Local WiFi" to "http://192.168.1.100:8000/api/v1/"
+                            ).forEach { (label, url) ->
+                                val isSelected = currentBaseUrl == url
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(percent = 50))
+                                        .background(
+                                            if (isSelected) Color(0xFF3131C0) else Color(0xFF222736)
+                                        )
+                                        .border(
+                                            1.dp,
+                                            if (isSelected) Color(0xFF8B5CF6) else BorderGlass,
+                                            RoundedCornerShape(percent = 50)
+                                        )
+                                        .clickable {
+                                            currentBaseUrl = url
+                                            sessionManager.setBaseUrl(url)
+                                            showUrlSavedToast = true
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) Color.White else Color(0xFFCBC3D7)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Custom URL Input
+                        TextField(
+                            value = currentBaseUrl,
+                            onValueChange = {
+                                currentBaseUrl = it
+                                sessionManager.setBaseUrl(it)
+                            },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF131722),
+                                unfocusedContainerColor = Color(0xFF131722),
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
-            }
 
-            // Biometric Lock Toggle Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground),
-                border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
-            ) {
-                Row(
+                // 3. Security & Biometrics Card
+                GlassmorphicCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    backgroundColor = Color(0xF2181D2C),
+                    spotColor = Color(0x3310B981),
+                    elevation = 8.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0x3310B981)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Fingerprint,
+                                    contentDescription = "Biometric",
+                                    tint = EmeraldMint,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Biometric App Lock",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "Require fingerprint to unlock app",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    fontSize = 11.5.sp
+                                )
+                            }
+                        }
+
+                        Switch(
+                            checked = isBiometricOn,
+                            onCheckedChange = {
+                                isBiometricOn = it
+                                sessionManager.setBiometricEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = ElectricEmerald,
+                                uncheckedThumbColor = TextMuted,
+                                uncheckedTrackColor = Color(0xFF262A35)
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 4. Logout Action
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Fingerprint, contentDescription = "Biometric", tint = Emerald400)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text("Biometric Security", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-                            Text("Unlock app with Fingerprint / Face", fontSize = 12.sp, color = TextSecondary)
-                        }
-                    }
-                    Switch(
-                        checked = isBiometricOn,
-                        onCheckedChange = {
-                            isBiometricOn = it
-                            sessionManager.setBiometricEnabled(it)
+                        .height(50.dp)
+                        .shadow(10.dp, shape = RoundedCornerShape(14.dp), spotColor = Color(0xFFF43F5E))
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x33F43F5E))
+                        .border(1.dp, Color(0x66F43F5E), RoundedCornerShape(14.dp))
+                        .clickable {
+                            authViewModel.logout()
+                            onLogout()
                         },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = ObsidianBlack,
-                            checkedTrackColor = Emerald500,
-                            uncheckedThumbColor = TextMuted,
-                            uncheckedTrackColor = ObsidianDark
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Logout,
+                            contentDescription = "Logout",
+                            tint = CoralRose,
+                            modifier = Modifier.size(18.dp)
                         )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Logout Button
-            Button(
-                onClick = {
-                    authViewModel.logout()
-                    onLogout()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
-                shape = RoundedCornerShape(14.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Rose500)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Logout, contentDescription = "Logout", tint = Rose400)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout from Account", color = Rose400, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Sign Out from Account",
+                            fontWeight = FontWeight.Bold,
+                            color = CoralRose,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }

@@ -12,7 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kharchapani.app.KharchaPaniApp
-import com.kharchapani.app.theme.ObsidianBlack
+import com.kharchapani.app.theme.ObsidianCanvas
 import com.kharchapani.app.ui.analytics.AnalyticsScreen
 import com.kharchapani.app.ui.auth.LoginScreen
 import com.kharchapani.app.ui.auth.RegisterScreen
@@ -72,7 +72,7 @@ fun AppNavHost(
                 )
             }
         },
-        containerColor = ObsidianBlack
+        containerColor = ObsidianCanvas
     ) { paddingValues ->
         Box(
             modifier = Modifier

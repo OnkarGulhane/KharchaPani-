@@ -2,18 +2,21 @@ package com.kharchapani.app.ui.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kharchapani.app.data.api.GoogleAuthHelper
 import com.kharchapani.app.theme.*
+import com.kharchapani.app.ui.components.GlassmorphicCard
+import com.kharchapani.app.ui.components.ObsidianAtmosphere
 import com.kharchapani.app.viewmodel.AuthUiState
 import com.kharchapani.app.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
@@ -67,210 +72,222 @@ fun LoginScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ObsidianBlack)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Brand Header
-                Text(
-                    text = "💸 KharchaPani",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Emerald400
-                )
-                Text(
-                    text = "Smart AI Expense & Wealth Engine",
-                    fontSize = 13.sp,
-                    color = TextSecondary,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
-                )
+    val cardShape = RoundedCornerShape(26.dp)
 
-                // 1. Fast 1-Click Google Sign-In
-                OutlinedButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            val credResult = GoogleAuthHelper.signInWithCredentialManager(context)
-                            credResult.fold(
-                                onSuccess = { idToken ->
-                                    authViewModel.loginWithGoogle(idToken)
-                                },
-                                onFailure = { error ->
-                                    if (error.message?.contains("cancelled", ignoreCase = true) == true) {
-                                        // Cancelled by user
-                                    } else {
-                                        val client = GoogleAuthHelper.getGoogleSignInClient(context)
-                                        client.signOut().addOnCompleteListener {
-                                            googleSignInLauncher.launch(client.signInIntent)
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    enabled = uiState !is AuthUiState.Loading,
+    ObsidianAtmosphere {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            GlassmorphicCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = cardShape,
+                backgroundColor = Color(0xF2181D2C),
+                spotColor = Color(0x666366F1),
+                elevation = 20.dp
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = ObsidianDark),
-                    border = BorderStroke(1.dp, CardBorder)
+                        .padding(26.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                    // Glowing Brand Logo
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .shadow(16.dp, shape = RoundedCornerShape(18.dp), spotColor = Color(0xFF8B5CF6))
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7))
+                                )
+                            )
+                            .border(BorderStroke(1.5.dp, Color(0x80FFFFFF)), RoundedCornerShape(18.dp)),
+                        contentAlignment = Alignment.Center
                     ) {
+                        Icon(
+                            imageVector = Icons.Rounded.AccountBalanceWallet,
+                            contentDescription = "Logo",
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "🌐",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(end = 10.dp)
+                            text = "KharchaPani",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            letterSpacing = (-0.5).sp
                         )
                         Text(
-                            text = "Continue with Google",
-                            color = TextPrimary,
-                            fontSize = 15.sp,
+                            text = "Obsidian Kinetic Finance Engine",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFD0BCFF),
                             fontWeight = FontWeight.Medium
                         )
                     }
-                }
 
-                // 2. Subtle Divider
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = CardBorder)
-                    Text(
-                        text = "OR EMAIL",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(horizontal = 10.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = CardBorder)
-                }
-
-                // Email Input
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email Address", color = TextSecondary) },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = Emerald500) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = Emerald500,
-                        unfocusedBorderColor = CardBorder,
-                        focusedContainerColor = ObsidianDark,
-                        unfocusedContainerColor = ObsidianDark
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password Input
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password", color = TextSecondary) },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = Emerald500) },
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    // Email Field
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email Address") },
+                        leadingIcon = {
                             Icon(
-                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle Password",
-                                tint = TextSecondary
+                                imageVector = Icons.Rounded.Email,
+                                contentDescription = "Email",
+                                tint = Color(0xFFD0BCFF)
                             )
-                        }
-                    },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = Emerald500,
-                        unfocusedBorderColor = CardBorder,
-                        focusedContainerColor = ObsidianDark,
-                        unfocusedContainerColor = ObsidianDark
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Error Banner
-                if (uiState is AuthUiState.Error) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = (uiState as AuthUiState.Error).message,
-                        color = Rose400,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NeonIndigo,
+                            unfocusedBorderColor = BorderGlass,
+                            focusedContainerColor = Color(0xFF131722),
+                            unfocusedContainerColor = Color(0xFF131722),
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedLabelColor = Color(0xFFD0BCFF),
+                            unfocusedLabelColor = TextSecondary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    // Password Field
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Lock,
+                                contentDescription = "Password",
+                                tint = Color(0xFFD0BCFF)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
+                                    contentDescription = "Toggle",
+                                    tint = TextMuted
+                                )
+                            }
+                        },
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NeonIndigo,
+                            unfocusedBorderColor = BorderGlass,
+                            focusedContainerColor = Color(0xFF131722),
+                            unfocusedContainerColor = Color(0xFF131722),
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedLabelColor = Color(0xFFD0BCFF),
+                            unfocusedLabelColor = TextSecondary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                // Submit Login Button
-                Button(
-                    onClick = { authViewModel.login(email, password) },
-                    enabled = uiState !is AuthUiState.Loading,
-                    colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    if (uiState is AuthUiState.Loading) {
-                        CircularProgressIndicator(color = ObsidianBlack, modifier = Modifier.size(24.dp))
-                    } else {
+                    // Error Message if any
+                    if (uiState is AuthUiState.Error) {
                         Text(
-                            text = "Login to KharchaPani",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ObsidianBlack
+                            text = (uiState as AuthUiState.Error).message,
+                            color = CoralRose,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    // Login Action Button with Gradient
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .shadow(12.dp, shape = RoundedCornerShape(14.dp), spotColor = Color(0xFF6366F1))
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF8B5CF6)))
+                            )
+                            .clickable(enabled = uiState !is AuthUiState.Loading) {
+                                authViewModel.login(email, password)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState is AuthUiState.Loading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(22.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Sign In",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
 
-                // Register Link
-                TextButton(onClick = onNavigateToRegister) {
-                    Text(
-                        text = "Don't have an account? Sign Up",
-                        color = Emerald400,
-                        fontSize = 14.sp
-                    )
-                }
+                    // Google One-Tap Sign In
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0xFF222736))
+                            .border(1.dp, BorderGlass, RoundedCornerShape(14.dp))
+                            .clickable {
+                                val intent = GoogleAuthHelper.getGoogleSignInClient(context).signInIntent
+                                googleSignInLauncher.launch(intent)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(text = "G", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color(0xFF4285F4))
+                            Text(
+                                text = "Continue with Google",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextPrimary
+                            )
+                        }
+                    }
 
-                // Server Config Link
-                TextButton(onClick = onNavigateToSettings) {
-                    Text(
-                        text = "⚙️ Configure Server IP / URL",
-                        color = TextMuted,
-                        fontSize = 12.sp
-                    )
+                    // Server Config Link & Register Link
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Server Settings ⚙️",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFD0BCFF),
+                            modifier = Modifier.clickable { onNavigateToSettings() }
+                        )
+
+                        Text(
+                            text = "Create Account →",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF8B5CF6),
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable { onNavigateToRegister() }
+                        )
+                    }
                 }
             }
         }

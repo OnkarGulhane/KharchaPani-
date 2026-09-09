@@ -2,6 +2,8 @@ package com.kharchapani.app.ui.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,6 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,18 +71,22 @@ fun RegisterScreen(
         }
     }
 
+    val cardShape = RoundedCornerShape(28.dp)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ObsidianBlack)
+            .background(ObsidianCanvas)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(CardBorder))
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(24.dp, shape = cardShape, spotColor = NeonIndigo),
+            shape = cardShape,
+            colors = CardDefaults.cardColors(containerColor = SurfaceElevated),
+            border = BorderStroke(1.dp, BorderGlass)
         ) {
             Column(
                 modifier = Modifier
@@ -87,46 +96,46 @@ fun RegisterScreen(
             ) {
                 Text(
                     text = "Create Account ✨",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Emerald400
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TextPrimary
                 )
                 Text(
                     text = "Join KharchaPani today",
-                    fontSize = 13.sp,
-                    color = TextSecondary,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 18.dp)
+                    style = MaterialTheme.typography.labelMedium,
+                    color = SurfaceTintIndigo,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
                 )
 
-                // 1. Fast 1-Click Google Sign-Up
-                OutlinedButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            val credResult = GoogleAuthHelper.signInWithCredentialManager(context)
-                            credResult.fold(
-                                onSuccess = { idToken ->
-                                    authViewModel.loginWithGoogle(idToken)
-                                },
-                                onFailure = { error ->
-                                    if (error.message?.contains("cancelled", ignoreCase = true) == true) {
-                                        // Cancelled by user
-                                    } else {
-                                        val client = GoogleAuthHelper.getGoogleSignInClient(context)
-                                        client.signOut().addOnCompleteListener {
-                                            googleSignInLauncher.launch(client.signInIntent)
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    enabled = uiState !is AuthUiState.Loading,
+                // 1. Fast 1-Click Google Sign-Up (Pill Shape)
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = ObsidianDark),
-                    border = BorderStroke(1.dp, CardBorder)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(SurfaceHighlight)
+                        .border(1.dp, BorderGlass, RoundedCornerShape(percent = 50))
+                        .clickable(enabled = uiState !is AuthUiState.Loading) {
+                            coroutineScope.launch {
+                                val credResult = GoogleAuthHelper.signInWithCredentialManager(context)
+                                credResult.fold(
+                                    onSuccess = { idToken ->
+                                        authViewModel.loginWithGoogle(idToken)
+                                    },
+                                    onFailure = { error ->
+                                        if (error.message?.contains("cancelled", ignoreCase = true) == true) {
+                                            // Cancelled
+                                        } else {
+                                            val client = GoogleAuthHelper.getGoogleSignInClient(context)
+                                            client.signOut().addOnCompleteListener {
+                                                googleSignInLauncher.launch(client.signInIntent)
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -140,8 +149,8 @@ fun RegisterScreen(
                         Text(
                             text = "Continue with Google",
                             color = TextPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -150,18 +159,18 @@ fun RegisterScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 14.dp),
+                        .padding(vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = CardBorder)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = SurfaceHighlight)
                     Text(
                         text = "OR EMAIL",
-                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(horizontal = 10.dp)
+                        color = TextMuted,
+                        modifier = Modifier.padding(horizontal = 12.dp)
                     )
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = CardBorder)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = SurfaceHighlight)
                 }
 
                 // Full Name Input
@@ -169,17 +178,17 @@ fun RegisterScreen(
                     value = fullName,
                     onValueChange = { fullName = it },
                     label = { Text("Full Name", color = TextSecondary) },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = Emerald500) },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = NeonIndigo) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = Emerald500,
-                        unfocusedBorderColor = CardBorder,
-                        focusedContainerColor = ObsidianDark,
-                        unfocusedContainerColor = ObsidianDark
+                        focusedBorderColor = NeonIndigo,
+                        unfocusedBorderColor = BorderGlass,
+                        focusedContainerColor = SurfaceContainerLowest,
+                        unfocusedContainerColor = SurfaceContainerLowest
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -190,18 +199,18 @@ fun RegisterScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email Address", color = TextSecondary) },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = Emerald500) },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = NeonIndigo) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = Emerald500,
-                        unfocusedBorderColor = CardBorder,
-                        focusedContainerColor = ObsidianDark,
-                        unfocusedContainerColor = ObsidianDark
+                        focusedBorderColor = NeonIndigo,
+                        unfocusedBorderColor = BorderGlass,
+                        focusedContainerColor = SurfaceContainerLowest,
+                        unfocusedContainerColor = SurfaceContainerLowest
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -212,7 +221,7 @@ fun RegisterScreen(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password", color = TextSecondary) },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = Emerald500) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = NeonIndigo) },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
@@ -228,18 +237,18 @@ fun RegisterScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        focusedBorderColor = Emerald500,
-                        unfocusedBorderColor = CardBorder,
-                        focusedContainerColor = ObsidianDark,
-                        unfocusedContainerColor = ObsidianDark
+                        focusedBorderColor = NeonIndigo,
+                        unfocusedBorderColor = BorderGlass,
+                        focusedContainerColor = SurfaceContainerLowest,
+                        unfocusedContainerColor = SurfaceContainerLowest
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     text = "🔒 Password must be at least 8 characters",
-                    fontSize = 11.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -250,39 +259,48 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = (uiState as AuthUiState.Error).message,
-                        color = Rose400,
-                        fontSize = 13.sp,
+                        color = CoralRose,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
                     )
                 } else if (uiState is AuthUiState.Success) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = (uiState as AuthUiState.Success).message,
-                        color = Emerald400,
-                        fontSize = 13.sp,
+                        color = ElectricEmerald,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Button(
-                    onClick = { authViewModel.register(email, password, fullName) },
-                    enabled = uiState !is AuthUiState.Loading,
-                    colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
-                    shape = RoundedCornerShape(14.dp),
+                val isRegisterEnabled = uiState !is AuthUiState.Loading && email.isNotBlank() && password.length >= 8 && fullName.isNotBlank()
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(54.dp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(
+                            if (isRegisterEnabled) {
+                                Brush.horizontalGradient(listOf(NeonIndigo, VibrantViolet))
+                            } else {
+                                Brush.horizontalGradient(listOf(SurfaceHighlight, SurfaceHighlight))
+                            }
+                        )
+                        .clickable(enabled = isRegisterEnabled) {
+                            authViewModel.register(email, password, fullName)
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     if (uiState is AuthUiState.Loading) {
-                        CircularProgressIndicator(color = ObsidianBlack, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(color = TextPrimary, modifier = Modifier.size(24.dp))
                     } else {
                         Text(
                             text = "Register Account",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = ObsidianBlack
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isRegisterEnabled) TextPrimary else TextMuted
                         )
                     }
                 }
@@ -292,8 +310,8 @@ fun RegisterScreen(
                 TextButton(onClick = onNavigateToLogin) {
                     Text(
                         text = "Already have an account? Login",
-                        color = Emerald400,
-                        fontSize = 14.sp
+                        color = SurfaceTintIndigo,
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             }

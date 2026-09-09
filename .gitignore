@@ -21,6 +21,7 @@ android/build/
 android/app/build/
 android/local.properties
 android/tools/
+*.apk
 android/*.apk
 android/*.png
 android/*.bat
